@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>White Board</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1554c4">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: practical crew tool, quick to hit between runs, no fuss
+   IDEA: the trailer whiteboard: marker colours on white, a grid of well columns
+   PICTURE: the well columns themselves, stages stacking down like marker entries
+   COLOUR and TYPE: white board, marker blue lead, marker green for stages, red for flags; Kalam for headings, Atkinson Hyperlegible for everything typed
+   LAYOUT: compact side-window first; run counter on top, wells grid below, day total pinned in header */
+:root{color-scheme:light dark;
+--bg:light-dark(#eef1f3,#14181c);--board:light-dark(#ffffff,#1d232a);--ink:light-dark(#16202a,#e8edf2);--mute:light-dark(#5b6873,#9aa6b1);
+--line:light-dark(#d5dbe0,#33404b);--blue:light-dark(#1554c4,#6ea0ff);--blueBg:light-dark(#e6eefc,#1d2c47);
+--green:light-dark(#137a3a,#5fd38a);--greenBg:light-dark(#e5f5ea,#183224);--red:light-dark(#c41f2e,#ff7a85)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Atkinson Hyperlegible",system-ui,sans-serif;overflow-x:clip}
+h1,h2{font-family:Kalam,"Comic Sans MS",cursive;font-weight:700;margin:0;line-height:1.05}
+h1{font-size:22px;color:var(--blue)}h2{font-size:22px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--board);border-radius:8px;min-height:40px;padding:0 12px}
+button:hover{border-color:var(--blue)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+input{border:1px solid var(--line);background:var(--board);border-radius:6px;padding:6px 8px;font-size:16px;width:100%}
+.top{position:sticky;top:0;z-index:5;background:var(--board);border-bottom:1px solid var(--line);padding:6px max(2vw,10px) 0}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.brand{display:flex;align-items:baseline;gap:8px}
+h1{white-space:nowrap}
+.top button{min-height:34px;font-size:14px;padding:0 10px}
+.date{color:var(--mute);font-size:13px;white-space:nowrap}
+.total{display:flex;align-items:center;gap:6px;background:var(--greenBg);color:var(--green);border-radius:8px;padding:0 10px;min-height:34px;font-size:14px}
+.total b{font-size:22px;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+main{padding:12px max(3vw,12px) 40px;display:grid;gap:14px;max-width:1500px;margin:auto}
+.card{background:var(--board);border:1px solid var(--line);border-radius:12px;padding:14px}
+.head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
+.head .sp{flex:1}
+.mini{min-height:32px;font-size:13px;padding:0 10px}
+.runcard{padding:10px 14px}.runcard .head{margin-bottom:6px}
+.runbtn{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:700;font-size:17px;min-height:42px;padding:0 18px}
+.runbtn.minus{background:var(--board);color:var(--blue);font-size:15px;min-height:42px}
+.eq{display:grid;grid-template-columns:24px minmax(0,.9fr) minmax(0,.8fr) minmax(0,1.6fr) auto;gap:6px;align-items:center;padding:3px 0;border-top:1px solid var(--line)}
+.eq input:not([type=checkbox]){padding:4px 8px;font-size:15px;min-height:32px}
+.eq .nt{font-size:14px}
+.eq.off{opacity:.6}
+.offeq{border-top:1px solid var(--line);margin-top:2px}
+.offeq summary{cursor:pointer;color:var(--mute);font-size:14px;padding:6px 0 2px;list-style-position:inside}
+.offeq summary:hover{color:var(--blue)}
+.eq .wide{grid-column:2/5}
+.eq input[type=checkbox]{width:20px;height:20px;accent-color:var(--blue)}
+.cnt{display:flex;align-items:center;gap:4px}
+.cnt b{min-width:3ch;text-align:right;font-size:18px;font-variant-numeric:tabular-nums}
+.cnt button{width:34px;min-height:32px;padding:0;font-size:18px;font-weight:700}
+.eq .x{min-height:32px;width:28px}
+.x{border:0;background:none;color:var(--mute);min-height:32px;width:32px;padding:0}
+.x:hover{color:var(--red)}
+.hint{color:var(--mute);font-size:13px;margin:6px 0 0}
+.step{display:flex;align-items:center;gap:4px}
+.step b{min-width:2.5ch;text-align:center;font-size:20px}
+.step button{width:40px;padding:0;font-size:20px}
+.grid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
+.well{border:2px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;scroll-snap-align:start;background:var(--board)}
+.well .nm{font-weight:700;border-color:transparent;background:var(--blueBg);color:var(--blue)}
+.wtop{display:flex;gap:6px;align-items:center}
+.well[style] {border-color:var(--wc)}
+.well[style] .nm{background:var(--wc);color:var(--wt)}
+.wdot{flex:none;width:34px;height:34px;min-height:34px;padding:0;border-radius:50%;border:2px solid var(--line);background:conic-gradient(#e53935,#fdd835,#43a047,#1e88e5,#8e24aa,#e53935)}
+.well[style] .wdot{background:var(--wc);border-color:var(--board);box-shadow:0 0 0 1px var(--line)}
+.wsw{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:8px 0}
+.wsw button{min-height:40px;padding:0 4px;font-size:14px;font-weight:700;border:1px solid var(--line)}
+.wsw button[aria-pressed=true]{outline:3px solid var(--ink);outline-offset:1px}
+.wchip{display:inline-block;border-radius:5px;padding:1px 8px;font-weight:700}
+.lbl{font-size:13px;color:var(--mute);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.lbl input{padding:4px 6px}
+.stages{display:flex;flex-direction:column;gap:4px;min-height:40px}
+.stg{display:flex;gap:6px;align-items:center;text-align:left;min-height:36px;border-radius:6px;padding:4px 8px;border:1px solid var(--line);background:var(--board);width:100%}
+.stg .n{font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}
+.stg .note{font-size:13px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stg[data-c]{border-width:2px}
+.add{border:2px dashed var(--green);color:var(--green);font-weight:700;background:var(--greenBg)}
+.wfoot{font-size:13px;color:var(--mute);display:flex;justify-content:space-between}
+.sum{width:100%;border-collapse:collapse;font-size:15px}
+.sum td,.sum th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.sum td.r,.sum th.r{text-align:right;font-variant-numeric:tabular-nums}
+.sum tfoot td{font-weight:700;border-bottom:0}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--board);color:var(--ink);padding:16px;width:min(380px,92vw)}
+dialog::backdrop{background:#0008}
+dialog h2{margin-bottom:10px}
+.row{display:flex;gap:8px;margin-top:12px;justify-content:flex-end;flex-wrap:wrap}
+.sw{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.sw button{width:40px;height:40px;padding:0;border-radius:50%;border:2px solid var(--line)}
+.sw button[aria-pressed=true]{outline:3px solid var(--ink);outline-offset:1px}
+.danger{color:var(--red);border-color:var(--red)}
+.primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:700}
+textarea{width:100%;min-height:120px;font:13px/1.3 ui-monospace,monospace;border:1px solid var(--line);border-radius:6px;background:var(--board);color:var(--ink);padding:6px}
+.hist{max-height:50vh;overflow:auto;font-size:14px}
+.hist div{border-bottom:1px solid var(--line);padding:6px 0}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--board);padding:8px 14px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-right:auto;align-self:stretch}
+.top{padding-bottom:0}.bar>*:not(.tabs){margin-bottom:6px}
+.top .tabs button{min-height:40px}
+.top .tabs button{border:0;border-radius:0;background:none;border-bottom:3px solid transparent;color:var(--mute);flex:none;padding:0 12px}
+.top .tabs button[aria-selected=true]{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
+.seg button[aria-pressed=true]{font-weight:700}
+.top .seg{border-width:2px}
+.top .seg button[data-shift=D]{background:light-dark(#fff8d6,#3a3210);color:light-dark(#6b5600,#f5d96b)}
+.top .seg button[data-shift=N]{background:light-dark(#e3ebff,#17224a);color:light-dark(#1d3f9e,#9bb5ff)}
+.top .seg button[data-shift=D][aria-pressed=true]{background:#ffd400;color:#111}
+.top .seg button[data-shift=N][aria-pressed=true]{background:#1a3fb0;color:#fff}
+.top .seg:has([data-shift=D][aria-pressed=true]){border-color:#e0b800}
+.top .seg:has([data-shift=N][aria-pressed=true]){border-color:#1a3fb0}
+.sh{font-size:11px;font-weight:700;border-radius:4px;padding:1px 4px;background:var(--blueBg);color:var(--blue);margin-left:auto}
+.stg[data-c] .sh{background:#fff8;color:#16202a}
+.shiftbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.pill{background:var(--blueBg);color:var(--blue);border-radius:10px;padding:6px 12px;font-size:14px}
+.pill b{font-size:22px;margin-left:4px;font-variant-numeric:tabular-nums}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.form label{font-size:13px;color:var(--mute);display:grid;gap:3px}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 16px}
+.checks label{display:flex;gap:8px;align-items:center;min-height:36px}
+.checks input{width:20px;height:20px;flex:none;accent-color:var(--blue)}
+.ops{width:100%;min-height:180px;font:16px/1.45 inherit;font-family:inherit}
+.mail{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;background:var(--blue);color:#fff;border-radius:8px;min-height:44px;padding:0 18px;font-weight:700}
+.subj{font-size:13px;color:var(--mute);margin-top:6px;overflow-wrap:anywhere}
+.sum input{padding:3px 6px;width:5.5em;text-align:right}
+.ckh{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.ed{min-height:32px;font-size:13px;padding:0 10px}
+.ed[aria-pressed=true]{background:var(--blue);color:#fff;border-color:var(--blue)}
+.erow{display:flex;gap:6px;align-items:center;grid-column:1/-1}
+.checks .erow input{width:auto;height:auto;flex:1;max-width:520px}
+.addt{grid-column:1/-1;justify-self:start;border:2px dashed var(--line)}
+.je{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,10em) 32px;gap:8px;align-items:end;padding:6px 0;border-top:1px solid var(--line)}
+.je label{font-size:13px;color:var(--mute);display:grid;gap:3px}
+.je .x{align-self:center;margin-top:18px}
+.je.due input[type=date]{border-color:var(--red);color:var(--red);font-weight:700}
+@media(max-width:600px){.je{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 32px}.je .nm2{grid-column:1/3}}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+@media(max-width:1180px){.date{display:none}}
+@media(max-width:940px){.bar .tabs{order:9;flex-basis:100%;margin-right:0}.brand{margin-right:auto}}
+@media(max-width:600px){.lg,.ic{display:none}.top .seg{border-width:1px}.top .seg button{padding:0 7px}h1{font-size:18px}.bar{gap:6px}.top .seg button,.top .tools button{padding:0 8px}.tools{gap:4px}.total span{font-size:13px}.brand{margin-right:auto}.eq{grid-template-columns:24px minmax(0,1fr) minmax(0,1fr) auto}.eq [data-a=name]{grid-column:2/4}.eq .ser{grid-column:2/3;order:5}.eq .nt{grid-column:3/5;order:6}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <div class="brand"><h1>White Board</h1><span class="date" id="date"></span></div>
+  <nav class="tabs" role="tablist"><button role="tab" data-tab="job" aria-selected="false">Job Info</button><button role="tab" data-tab="board" aria-selected="true">Board</button><button role="tab" data-tab="D" aria-selected="false">Days XO</button><button role="tab" data-tab="N" aria-selected="false">Nights XO</button></nav>
+    <div class="seg" title="Current shift. New stages and runs get tagged with it."><button data-shift="D"><span class="ic">☀ </span>Days</button><button data-shift="N"><span class="ic">☾ </span>Nights</button></div>
+    <div class="tools">
+      <button id="undo" title="Undo last change (Ctrl+Z)" aria-label="Undo">↶<span class="lg"> Undo</span></button>
+      <button id="newday">New day</button>
+      <button id="more" title="More" aria-label="More">⋯<span class="lg"> More</span></button>
+    </div>
+  </div>
+</header>
+
+<main id="pBoard">
+  <section class="card runcard" aria-labelledby="h-runs">
+    <div class="head">
+      <h2 id="h-runs" title="Checked items are on the string and get counted by +1 run. Unchecked items fold into Not on the string and keep their counts.">Run counter</h2>
+      <button class="mini" id="addEq" title="Add equipment">+ Add</button><button class="mini" id="techBtn" title="Email run counter to Tech">Email Tech</button><span class="sp"></span>
+      <button class="runbtn minus" id="runDown" title="Take one run off every checked item">−1 run</button>
+      <button class="runbtn" id="runUp" title="Add one run to every checked item">+1 run</button>
+    </div>
+    <div id="eqList"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-wells">
+    <div class="head">
+      <h2 id="h-wells">Wells</h2><span class="sp"></span>
+      <span class="lbl">Number of wells</span>
+      <div class="step"><button id="wDown" aria-label="Fewer wells">−</button><b id="wCount">0</b><button id="wUp" aria-label="More wells">+</button></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="hint">Tap a stage to change its number, colour it, or add a note. Stage numbers carry on from the last one, even after New day.</p>
+  </section>
+
+  <section class="card" aria-labelledby="h-sum">
+    <div class="head"><h2 id="h-sum">Today's tickets</h2><span class="sp"></span><button id="copy">Copy summary</button></div>
+    <table class="sum"><thead><tr><th>Well</th><th>Stages</th><th class="r">Days</th><th class="r">Nights</th><th class="r">Count</th></tr></thead><tbody id="sumBody"></tbody><tfoot><tr><td colspan="2">Total</td><td class="r" id="sumD">0</td><td class="r" id="sumN">0</td><td class="r" id="sumTotal">0</td></tr></tfoot></table>
+  </section>
+</main>
+
+
+<main id="pJob" hidden>
+  <section class="card">
+    <div class="head"><h2>Job info</h2></div>
+    <div class="form">
+      <label>Unit<input data-n="unit"></label><label>Company<input data-n="company"></label><label>Pad<input data-n="pad"></label>
+      <label>Trailer<input data-n="trailer"></label>
+                  <label>Injector<input data-n="injector"></label><label>Accumulator<input data-n="accum"></label>
+    </div>
+    <p class="hint">These stay filled in from day to day and go at the top of both XO emails.</p>
+  </section>
+  <section class="card">
+    <div class="head"><h2>Packages, sheaves &amp; certified equipment</h2></div>
+    <div id="jeList"></div>
+    <div class="row" style="justify-content:flex-start"><button id="addJe">+ Add equipment</button></div>
+    <p class="hint">Expiry dates within 30 days turn red. These go in both XO emails.</p>
+  </section>
+</main>
+
+<main id="pNotes" hidden>
+  <section class="card">
+    <div class="head"><h2 id="nTitle">This shift</h2><span class="sp"></span><span class="lbl" id="nShiftLbl"></span></div>
+    <label class="lbl" style="margin-bottom:10px">Crew <input data-n="crew" data-ps style="max-width:320px" aria-label="Crew on this shift"></label>
+    <div class="shiftbar"><span class="pill">Stages<b id="nStages">0</b></span><span class="pill">Runs<b id="nRuns">0</b></span></div>
+    <table class="sum"><thead><tr><th>Well</th><th>This shift</th><th class="r">Total stages</th><th class="r">Completed</th><th class="r">Remaining</th></tr></thead><tbody id="nWells"></tbody></table>
+    <p class="hint">Completed is the highest stage number done on that well. Remaining is total stages minus completed. Total stages is kept with the well.</p>
+  </section>
+  <section class="card">
+    <div class="head"><h2>Checks</h2></div>
+    <div class="ckh"><span class="lbl">Weekly checks</span><button class="ed" data-edit="weekly">Edit list</button></div><div class="checks" id="cWeekly"></div>
+    <div class="ckh" style="margin-top:10px"><span class="lbl">Daily duties</span><button class="ed" data-edit="daily">Edit list</button></div><div class="checks" id="cDaily"></div>
+    <p class="hint">Lists are shared by Days and Nights and stay for the next job.</p>
+  </section>
+  <section class="card">
+    <div class="head"><h2 id="opsTitle">Operations</h2></div>
+    <textarea class="ops" data-n="ops" data-ps placeholder="• One point per line. Press Enter for the next bullet."></textarea>
+    <label class="lbl" style="margin-top:8px">Email to</label><input data-n="to" type="text" inputmode="email" placeholder="Separate addresses with ; or ,">
+    <div class="row" style="justify-content:flex-start;margin-top:12px"><a class="mail" id="mail" href="#">Share as email</a><button id="nCopy">Copy notes</button><button id="nClear">Clear for next shift</button></div>
+    <p class="subj" id="subj"></p>
+  </section>
+</main>
+
+<dialog id="dlgStage"><form method="dialog" id="fStage">
+  <h2 id="sTitle">Stage</h2>
+  <label class="lbl" for="sNum">Stage number / ID</label><input id="sNum" autocomplete="off">
+  <div class="lbl" style="margin-top:10px">Highlight</div><div class="sw" id="sSw"></div>
+  <label class="lbl" for="sNote">Note / identifier</label><input id="sNote" placeholder="e.g. misfire, re-run, plug only" autocomplete="off">
+  <div class="row"><button type="button" class="danger" id="sDel">Delete</button><span style="flex:1"></span><button type="button" id="sCancel">Cancel</button><button class="primary" id="sSave">Save</button></div>
+</form></dialog>
+
+<dialog id="dlgJob"><h2>Start a new job?</h2>
+  <p>This clears the wells, stages, total stages, job info, both XO notes, shift run tallies and past days.</p>
+  <label class="checks" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" id="jKeepCounts">Keep equipment run counts</label>
+  <p class="hint"><b>Sending tool runs to Tech?</b> Do that first with Email run counter to Tech on the Board.</p>
+  <p class="hint">Your equipment list stays either way. Undo can bring the old job back until you close the app.</p>
+  <div class="row"><button id="jNo">Cancel</button><button class="primary" id="jYes">Clear everything</button></div></dialog>
+<dialog id="dlgTech"><h2>Email run counter to Tech</h2>
+  <p class="hint" style="margin-top:0">Sends every item in the run counter with its S/N and runs.</p>
+  <label class="lbl" for="tTo" style="margin-top:10px">Tech emails</label><input id="tTo" type="text" inputmode="email" placeholder="Separate addresses with ; or ,">
+  <pre id="tPrev" style="white-space:pre-wrap;font:13px/1.4 ui-monospace,monospace;background:var(--bg);border-radius:6px;padding:8px;margin:10px 0 0;max-height:30vh;overflow:auto"></pre>
+  <div class="row"><button id="tClose">Close</button><button id="tCopy">Copy</button><a class="mail" id="tMail" href="#">Email</a></div></dialog>
+<dialog id="dlgWell"><h2 id="wcTitle">Well colour</h2><div class="wsw" id="wcSw"></div><div class="row"><button id="wcClose">Close</button></div></dialog>
+<dialog id="dlgAsk"><h2 id="aTitle"></h2><p id="aText"></p><div class="row"><button id="aNo">Cancel</button><button class="primary" id="aYes">OK</button></div></dialog>
+
+<dialog id="dlgMore"><h2>More</h2>
+  <div class="row" style="justify-content:flex-start"><button id="showHist">Past days</button><button id="exp">Backup (copy)</button><button id="imp">Restore</button><button id="newjob" class="danger">New job…</button></div>
+  <div id="moreBody" style="margin-top:10px"></div>
+  <div class="row"><button id="mClose">Close</button></div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+{
+const KEY='whiteboard.v1';
+const WCOLORS=[['','None'],['#ff0000','Red','#111'],['#009900','Green','#fff'],['#0000ff','Blue','#fff'],['#ffff00','Yellow','#111'],['#00ffff','Cyan','#111'],['#ff00ff','Magenta','#111'],['#ffa500','Orange','#111'],['#800080','Purple','#fff'],['#00ff00','Lime','#111'],['#ffc0cb','Pink','#111'],['#a52a2a','Brown','#fff'],['#595959','Gray','#fff'],['#ffd700','Gold','#111'],['#008080','Teal','#fff'],['#000080','Navy','#fff']];
+const txtOn=h=>{const c=WCOLORS.find(x=>x[0]===h);if(c&&c[2])return c[2];const n=parseInt(h.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000>150?'#111':'#fff'};
+const wStyle=w=>w.color?`style="--wc:${w.color};--wt:${txtOn(w.color)}"`:'';
+const wChip=w=>w.color?`<span class="wchip" style="background:${w.color};color:${txtOn(w.color)}">${esc(w.name)}</span>`:esc(w.name);
+const COLORS=[['','None'],['#fff59d','Yellow'],['#ffcc80','Orange'],['#ef9a9a','Red'],['#90caf9','Blue'],['#ce93d8','Purple'],['#a5d6a7','Green']];
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+const fresh=()=>({equipment:[
+  {id:uid(),name:'Cable Head',serial:'',ser:false,count:0,on:true},
+  {id:uid(),name:'Pack Off',serial:'',ser:false,count:0,on:true},
+  {id:uid(),name:'BRT',serial:'',count:0,on:true},
+  {id:uid(),name:'Swivel',serial:'',count:0,on:false}],
+  wells:[1,2,3].map(i=>({id:uid(),name:'Well '+i,zero:'',last:0,stages:[]})),
+  history:[],shift:'',runs:[],notes:{}});
+
+const WEEKLY0=['Drum chain tightness','Brake band tightness','PTO shafts greased','Oil / antifreeze levels checked in line truck and injector / accumulator','Packoff rubbers / brass changed','Full packoff rebuild'];
+const DAILY0=['Trailer clean','Line truck fueled up','Injector / accumulator fueled up'];
+let eqOpen=false;
+let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.wells)S=fresh();
+const XO_TO='pdreports@bonnettsenergy.com',TECH_TO='cwingie@bonnettsenergy.com; kagunias@bonnettsenergy.com';
+const toList=t=>(t||'').split(/[;,\s]+/).filter(Boolean).map(encodeURIComponent).join(',').replace(/%40/g,'@');
+const norm=()=>{S.runs=S.runs||[];S.notes=S.notes||{};if(!S.notes.to)S.notes.to=XO_TO;if(!S.techTo)S.techTo=TECH_TO;if(!S.lists)S.lists={weekly:WEEKLY0.map((t,i)=>({id:'w'+i,t})),daily:DAILY0.map((t,i)=>({id:'d'+i,t}))};if(!S.notes.jobEq)S.notes.jobEq=[{id:uid(),name:'Upper sheave',sn:'',exp:''},{id:uid(),name:'Lower sheave',sn:'',exp:''}];
+  if(!S.notes.pkgMoved){const add=[];[['Lube package','lube','lubeExp'],['Latch package','latch','latchExp']].forEach(([nm,k,ke])=>{if(!S.notes.jobEq.some(e=>e.name.toLowerCase()===nm.toLowerCase()))add.push({id:uid(),name:nm,sn:S.notes[k]||'',exp:S.notes[ke]||''});delete S.notes[k];delete S.notes[ke]});S.notes.jobEq.unshift(...add);S.notes.pkgMoved=true}S.notes.sh=S.notes.sh||{D:{checks:S.notes.checks||{},ops:S.notes.ops||''},N:{checks:{},ops:''}};if(S.notes.crew&&!S.notes.sh.D.crew){S.notes.sh.D.crew=S.notes.crew}delete S.notes.crew;delete S.notes.checks;delete S.notes.ops;S.history=S.history||[];if(!S.shift)S.shift='D'};
+norm();
+{const OLD={"#e53935": "#ff0000", "#fb8c00": "#ffa500", "#fdd835": "#ffff00", "#43a047": "#009900", "#00897b": "#008080", "#1e88e5": "#0000ff", "#3949ab": "#000080", "#8e24aa": "#800080", "#d81b60": "#ffc0cb", "#6d4c41": "#a52a2a", "#757575": "#595959", "#212121": "#000080"};S.wells.forEach(w=>{if(OLD[w.color])w.color=OLD[w.color]})}
+const shD=k=>S.notes.sh[k];
+const migrateLog=()=>{['D','N'].forEach(k=>{const d=shD(k);if(!d.log){d.log=[];S.wells.forEach(w=>w.stages.filter(x=>x.shift===k).forEach(x=>d.log.push({sid:x.id,w:w.id,num:x.num,note:x.note})))}
+  if(d.runs==null)d.runs=(S.runs||[]).filter(r=>r===k).length})};
+migrateLog();
+const logEntry=sid=>{for(const k of ['D','N']){const e=shD(k).log.find(x=>x.sid===sid);if(e)return[k,e]}return[]};
+if(!S.shift){const h=new Date().getHours();S.shift=h>=6&&h<18?'D':'N'}
+S.equipment.forEach(e=>{if(e.ser===undefined)e.ser=!/^(cable ?head|pack ?off)$/i.test(e.name.trim())});
+let undo=[];
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const snap=()=>{undo.push(JSON.stringify(S));if(undo.length>50)undo.shift()};
+const change=fn=>{snap();fn();save();render()};
+let tt;const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),1600)};
+
+const ask=(title,text,yes='OK')=>new Promise(r=>{const d=$('dlgAsk');$('aTitle').textContent=title;$('aText').textContent=text;$('aYes').textContent=yes;
+  const done=v=>{d.close();$('aYes').onclick=$('aNo').onclick=null;r(v)};$('aYes').onclick=()=>done(true);$('aNo').onclick=()=>done(false);d.showModal()});
+
+const SH={D:'Days',N:'Nights'};
+const done=w=>{const n=w.stages.map(s=>parseFloat(s.num)).filter(x=>!isNaN(x));return Math.max(w.last||0,...n,0)};
+const nextNum=w=>{const nums=w.stages.map(s=>parseFloat(s.num)).filter(n=>!isNaN(n));const m=Math.max(w.last||0,...nums,0);return String(Math.floor(m)+1)};
+
+function render(){
+  $('date').textContent=today();
+  const eqRow=e=>`<div class="eq ${e.on?'':'off'}" data-id="${e.id}">
+    <input type="checkbox" data-a="on" ${e.on?'checked':''} aria-label="Count ${esc(e.name)} on +1 run">
+    <input data-a="name" value="${esc(e.name)}" aria-label="Equipment name" ${e.ser?'':'class="wide"'}>
+    ${e.ser?`<input class="ser" data-a="serial" value="${esc(e.serial)}" placeholder="S/N" aria-label="Serial number"><input class="nt" data-a="note" value="${esc(e.note||'')}" placeholder="Additional notes" aria-label="Additional notes for ${esc(e.name)}">`:''}
+    <div class="cnt"><button data-a="dn" aria-label="One less">−</button><b>${e.count}</b><button data-a="up" aria-label="One more">+</button><button class="x" data-a="del" title="Remove" aria-label="Remove ${esc(e.name)}">✕</button></div></div>`;
+  const onEq=S.equipment.filter(e=>e.on),offEq=S.equipment.filter(e=>!e.on);
+  $('eqList').innerHTML=(onEq.map(eqRow).join('')||(S.equipment.length?'<p class="hint">Nothing checked. Open the list below to put items on the string.</p>':'<p class="hint">No equipment yet. Add what you want counted.</p>'))
+    +(offEq.length?`<details class="offeq" ${eqOpen?'open':''}><summary>Not on the string (${offEq.length})</summary>${offEq.map(eqRow).join('')}</details>`:'');
+  $('wCount').textContent=S.wells.length;
+  $('grid').innerHTML=S.wells.map((w,i)=>`<div class="well" data-w="${i}" ${wStyle(w)}>
+    <div class="wtop"><input class="nm" data-a="wname" value="${esc(w.name)}" aria-label="Well name"><button class="wdot" data-a="wcol" title="Well colour" aria-label="Colour for ${esc(w.name)}"></button></div>
+    <label class="lbl">Zero @<input data-a="zero" value="${esc(w.zero)}" inputmode="decimal" aria-label="Zero at, ${esc(w.name)}"></label>
+    <div class="stages">${w.stages.map((s,j)=>`<button class="stg" data-s="${j}" ${s.color?`data-c style="background:${s.color};border-color:${s.color};color:#16202a"`:''}><span class="n">${esc(s.num)}</span>${s.note?`<span class="note" ${s.color?'style="color:#333"':''}>${esc(s.note)}</span>`:''}${s.shift?`<span class="sh">${s.shift}</span>`:''}</button>`).join('')}</div>
+    <button class="add" data-a="addS">+ Stage ${esc(nextNum(w))}</button>
+    <div class="wfoot"><span>D ${w.stages.filter(s=>s.shift==='D').length} · N ${w.stages.filter(s=>s.shift==='N').length}</span><b>${w.stages.length}${w.total?' · '+done(w)+'/'+esc(w.total):''}</b></div></div>`).join('');
+  const tot=S.wells.reduce((a,w)=>a+w.stages.length,0);
+  $('sumTotal').textContent=tot;
+  $('sumBody').innerHTML=S.wells.map(w=>`<tr><td>${wChip(w)}</td><td>${w.stages.map(s=>esc(s.num)+(s.note?` <small>(${esc(s.note)})</small>`:'')).join(', ')||'—'}</td><td class="r">${w.stages.filter(s=>s.shift==='D').length}</td><td class="r">${w.stages.filter(s=>s.shift==='N').length}</td><td class="r">${w.stages.length}</td></tr>`).join('');
+  const all=S.wells.flatMap(w=>w.stages);$('sumD').textContent=all.filter(s=>s.shift==='D').length;$('sumN').textContent=all.filter(s=>s.shift==='N').length;
+  document.querySelectorAll('[data-shift]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.shift===S.shift));
+  renderNotes();
+  $('undo').disabled=!undo.length;
+}
+
+/* equipment */
+$('eqList').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;const id=b.closest('.eq').dataset.id;const e=S.equipment.find(x=>x.id===id);
+  if(b.dataset.a==='up')change(()=>e.count++);
+  if(b.dataset.a==='dn')change(()=>{if(e.count>0)e.count--});
+  if(b.dataset.a==='del')ask('Remove '+e.name+'?','Its run count ('+e.count+') will be removed too.','Remove').then(y=>y&&change(()=>S.equipment=S.equipment.filter(x=>x!==e)));});
+$('eqList').addEventListener('change',ev=>{const t=ev.target,a=t.dataset.a;const e=S.equipment.find(x=>x.id===t.closest('.eq').dataset.id);
+  if(a==='on')change(()=>e.on=t.checked);
+  if(a==='name'||a==='serial'||a==='note')change(()=>e[a]=t.value.trim());});
+$('eqList').addEventListener('toggle',ev=>{if(ev.target.classList.contains('offeq'))eqOpen=ev.target.open},true);
+$('runUp').onclick=()=>{const on=S.equipment.filter(e=>e.on);if(!on.length)return toast('Nothing checked to count');change(()=>{on.forEach(e=>e.count++);shD(S.shift).runs++});toast('+1 run on '+on.length+' item'+(on.length>1?'s':''))};
+$('runDown').onclick=()=>{const on=S.equipment.filter(e=>e.on&&e.count>0);if(!on.length)return;change(()=>{on.forEach(e=>e.count--);if(shD(S.shift).runs>0)shD(S.shift).runs--});toast('−1 run')};
+const techSubj=()=>[N(S).unit,N(S).company,N(S).pad].map(x=>(x||'').trim()).filter(Boolean).concat('Tool runs').join(' ');
+const techBody=()=>{const items=S.equipment;const n=N(S);
+  return ['Tool runs - '+today(),[n.unit&&'Unit: '+n.unit,n.company&&'Company: '+n.company,n.pad&&'Pad: '+n.pad].filter(Boolean).join(' | '),'',
+   ...items.map(e=>e.name+(e.serial?' (S/N '+e.serial+')':'')+': '+e.count+' run'+(e.count===1?'':'s')+(e.note?' - '+e.note:''))].filter((l,i)=>l!==''||i===2).join('\n')};
+const techRender=()=>{$('tPrev').textContent='Subject: '+techSubj()+'\n\n'+techBody();
+  $('tMail').href='mailto:'+toList(S.techTo)+'?subject='+encodeURIComponent(techSubj())+'&body='+encodeURIComponent(techBody())};
+$('techBtn').onclick=()=>{if(!S.equipment.length)return toast('Nothing in the run counter');$('tTo').value=S.techTo||'';techRender();$('dlgTech').showModal()};
+$('tTo').addEventListener('input',()=>{S.techTo=$('tTo').value;save();techRender()});
+$('tClose').onclick=()=>$('dlgTech').close();
+$('addEq').onclick=()=>{change(()=>S.equipment.push({id:uid(),name:'New item',serial:'',ser:true,count:0,on:true}));const ins=$('eqList').querySelectorAll('[data-a=name]');const l=ins[ins.length-1];l.focus();l.select()};
+
+/* wells */
+$('wUp').onclick=()=>change(()=>S.wells.push({id:uid(),name:'Well '+(S.wells.length+1),zero:'',last:0,stages:[]}));
+$('wDown').onclick=async()=>{const w=S.wells[S.wells.length-1];if(!w)return;
+  if(w.stages.length&&!await ask('Remove '+w.name+'?','It has '+w.stages.length+' stage(s) today.','Remove'))return;change(()=>S.wells.pop())};
+$('grid').addEventListener('change',ev=>{const t=ev.target,w=S.wells[t.closest('.well').dataset.w];
+  if(t.dataset.a==='wname')change(()=>w.name=t.value.trim()||w.name);
+  if(t.dataset.a==='zero')change(()=>w.zero=t.value.trim());});
+$('grid').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;const wi=+b.closest('.well').dataset.w,w=S.wells[wi];
+  if(b.dataset.a==='addS'){const n=nextNum(w);change(()=>{const id=uid();w.stages.push({id,num:n,color:'',note:'',shift:S.shift});shD(S.shift).log.push({sid:id,w:w.id,num:n,note:''})});toast(w.name+': stage '+n+' added')}
+  if(b.dataset.s!=null)openStage(wi,+b.dataset.s);
+  if(b.dataset.a==='wcol'){wcCur=wi;$('wcTitle').textContent=w.name+' colour';$('wcSw').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.c===(w.color||'')));$('dlgWell').showModal()}});
+let wcCur=0;
+$('wcSw').innerHTML=WCOLORS.map(([c,n,t])=>`<button type="button" data-c="${c}" style="background:${c||'var(--board)'};color:${c?t:'inherit'}">${n}</button>`).join('');
+$('wcSw').onclick=ev=>{const b=ev.target.closest('button');if(!b)return;change(()=>S.wells[wcCur].color=b.dataset.c);$('dlgWell').close()};
+$('wcClose').onclick=()=>$('dlgWell').close();
+
+/* stage editor */
+let cur=null,pick='';
+$('sSw').innerHTML=COLORS.map(([c,n])=>`<button type="button" data-c="${c}" title="${n}" aria-label="${n}" style="background:${c||'var(--board)'}">${c?'':'∅'}</button>`).join('');
+$('sSw').onclick=ev=>{const b=ev.target.closest('button');if(!b)return;pick=b.dataset.c;paintSw()};
+const paintSw=()=>$('sSw').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===pick));
+function openStage(wi,si){cur=[wi,si];const s=S.wells[wi].stages[si];$('sTitle').textContent=S.wells[wi].name+' · stage';
+  $('sNum').value=s.num;$('sNote').value=s.note;pick=s.color;paintSw();$('dlgStage').showModal()}
+$('fStage').onsubmit=ev=>{ev.preventDefault();const[wi,si]=cur;const s=S.wells[wi].stages[si];
+  change(()=>{s.num=$('sNum').value.trim()||s.num;s.note=$('sNote').value.trim();s.color=pick;const[,e]=logEntry(s.id);if(e){e.num=s.num;e.note=s.note}});$('dlgStage').close()};
+$('sCancel').onclick=()=>$('dlgStage').close();
+$('sDel').onclick=()=>{const[wi,si]=cur;change(()=>{const[x]=S.wells[wi].stages.splice(si,1);const[k,e]=logEntry(x.id);if(e)shD(k).log=shD(k).log.filter(y=>y!==e)});$('dlgStage').close();toast('Stage deleted')};
+
+/* day */
+$('newday').onclick=async()=>{const tot=S.wells.reduce((a,w)=>a+w.stages.length,0);
+  if(!await ask('Start a new day?','Clears today\'s '+tot+' stage(s) from every well. Wells, zeros and equipment run counts stay, and the Days XO / Nights XO counts stay until you use Clear for next shift. Today is saved under More → Past days.','Clear stages'))return;
+  change(()=>{S.history.unshift({date:today(),wells:S.wells.map(w=>({name:w.name,stages:w.stages.map(s=>s.num+(s.note?' ('+s.note+')':''))}))});S.history=S.history.slice(0,60);
+    S.wells.forEach(w=>{const n=w.stages.map(s=>parseFloat(s.num)).filter(x=>!isNaN(x));if(n.length)w.last=Math.max(w.last||0,...n);w.stages=[]})});toast('Stages cleared')};
+$('newjob').onclick=()=>{$('dlgMore').close();$('jKeepCounts').checked=false;$('dlgJob').showModal()};
+$('jNo').onclick=()=>$('dlgJob').close();
+$('jYes').onclick=()=>{const keep=$('jKeepCounts').checked;
+  change(()=>{const f=fresh();S.wells=f.wells;S.history=[];const names=(S.notes.jobEq||[]).map(e=>({id:uid(),name:e.name,sn:'',exp:''}));S.notes={jobEq:names,pkgMoved:true};norm();migrateLog();S.equipment.forEach(e=>{if(!keep)e.count=0;e.serial='';e.note=''})});
+  fillNotes();$('dlgJob').close();toast('New job started')};
+$('undo').onclick=()=>{const p=undo.pop();if(!p)return;S=JSON.parse(p);save();render();fillNotes();toast('Undone')};
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('undo').click()}});
+
+/* summary */
+const summary=()=>[today(),...S.wells.map(w=>`${w.name}: ${w.stages.length} stage(s) (D ${w.stages.filter(s=>s.shift==='D').length} / N ${w.stages.filter(s=>s.shift==='N').length})${w.stages.length?' - '+w.stages.map(s=>s.num+(s.note?' ('+s.note+')':'')).join(', '):''}`),'Total stages: '+S.wells.reduce((a,w)=>a+w.stages.length,0)].join('\n');
+const copy=t=>navigator.clipboard?.writeText(t).then(()=>toast('Copied'),()=>toast('Copy blocked: select and copy by hand'));
+$('copy').onclick=()=>copy(summary());
+
+/* more */
+$('more').onclick=()=>{$('moreBody').innerHTML='';$('dlgMore').showModal()};
+$('mClose').onclick=()=>$('dlgMore').close();
+$('showHist').onclick=()=>{$('moreBody').innerHTML=S.history.length?`<div class="hist">${S.history.map(h=>`<div><b>${esc(h.date)}</b> · ${h.wells.reduce((a,w)=>a+w.stages.length,0)} stages<br>${h.wells.map(w=>esc(w.name)+': '+(esc(w.stages.join(', '))||'—')).join('<br>')}</div>`).join('')}</div>`:'<p class="hint">No past days yet. They show up here after New day.</p>'};
+$('exp').onclick=()=>{const t=JSON.stringify(S);$('moreBody').innerHTML='<p class="hint">Copied. Paste it somewhere safe (email, notes). Use Restore to load it back.</p><textarea readonly></textarea>';$('moreBody').querySelector('textarea').value=t;copy(t)};
+$('imp').onclick=()=>{$('moreBody').innerHTML='<p class="hint">Paste a backup below, then Load. This replaces everything on the board.</p><textarea id="impT"></textarea><div class="row"><button class="primary" id="impGo">Load</button></div>';
+  $('impGo').onclick=()=>{try{const d=JSON.parse($('impT').value);if(!d.wells||!d.equipment)throw 0;change(()=>{S=d;norm();migrateLog()});fillNotes();$('dlgMore').close();toast('Backup loaded')}catch(e){toast('That doesn\'t look like a backup')}}};
+
+/* tabs & shift */
+let VS='D';
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{const t=b.dataset.tab,n=t==='D'||t==='N';$('pBoard').hidden=t!=='board';$('pJob').hidden=t!=='job';$('pNotes').hidden=!n;if(n){VS=t;fillNotes();renderNotes()}
+  document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',x===b));try{localStorage.setItem(KEY+'.tab',b.dataset.tab)}catch(e){}});
+document.querySelectorAll('[data-shift]').forEach(b=>b.onclick=()=>{if(S.shift!==b.dataset.shift){change(()=>S.shift=b.dataset.shift);toast('Shift: '+SH[S.shift])}});
+
+/* notes */
+const N=S=>S.notes;const SD=()=>S.notes.sh[VS];
+const editing={weekly:false,daily:false};
+function renderChecks(){[['weekly','cWeekly'],['daily','cDaily']].forEach(([k,id])=>{const L=S.lists[k];
+  document.querySelector(`[data-edit=${k}]`).setAttribute('aria-pressed',editing[k]);document.querySelector(`[data-edit=${k}]`).textContent=editing[k]?'Done':'Edit list';
+  $(id).innerHTML=editing[k]?L.map((x,i)=>`<div class="erow"><input data-lt="${k}" data-i="${i}" value="${esc(x.t)}" aria-label="Task name"><button class="x" data-ldel="${k}" data-i="${i}" title="Remove" aria-label="Remove ${esc(x.t)}">✕</button></div>`).join('')+`<button class="addt" data-ladd="${k}">+ Add task</button>`
+   :L.map(x=>`<label><input type="checkbox" data-c="${x.id}" ${SD().checks[x.id]?'checked':''}>${esc(x.t)}</label>`).join('')||'<p class="hint">No tasks. Tap Edit list to add some.</p>'})}
+$('pNotes').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;
+  if(b.dataset.edit){const k=b.dataset.edit;editing[k]=!editing[k];if(!editing[k]){S.lists[k]=S.lists[k].filter(x=>x.t.trim());save();renderNotes()}renderChecks()}
+  if(b.dataset.ladd){const k=b.dataset.ladd;change(()=>S.lists[k].push({id:uid(),t:''}));renderChecks();[...$(k==='weekly'?'cWeekly':'cDaily').querySelectorAll('[data-lt]')].pop().focus()}
+  if(b.dataset.ldel){const k=b.dataset.ldel;change(()=>S.lists[k].splice(+b.dataset.i,1));renderChecks()}});
+$('pNotes').addEventListener('keydown',ev=>{const t=ev.target;if(t.dataset.lt&&ev.key==='Enter'){ev.preventDefault();document.querySelector(`[data-ladd=${t.dataset.lt}]`).click()}});
+const fillNotes=()=>{renderJe();renderChecks();document.querySelectorAll('[data-n]').forEach(i=>i.value=(i.hasAttribute('data-ps')?SD():N(S))[i.dataset.n]||'');document.querySelectorAll('#pNotes [data-c]').forEach(i=>i.checked=!!SD().checks[i.dataset.c])};
+document.querySelector('#pJob').addEventListener('input',ev=>{const t=ev.target;if(t.dataset.n){N(S)[t.dataset.n]=t.value;save();renderNotes()}});
+const dueSoon=d=>d&&(new Date(d+'T12:00')-new Date())/864e5<30;
+function renderJe(){$('jeList').innerHTML=N(S).jobEq.map((e,i)=>`<div class="je ${dueSoon(e.exp)?'due':''}" data-i="${i}">
+  <label class="nm2">Item<input data-je="name" value="${esc(e.name)}"></label>
+  <label>S/N<input data-je="sn" value="${esc(e.sn)}"></label>
+  <label>Expiry<input type="date" data-je="exp" value="${esc(e.exp)}"></label>
+  <button class="x" data-je-del title="Remove" aria-label="Remove ${esc(e.name)}">✕</button></div>`).join('')||'<p class="hint">No items. Add packages, sheaves or other certified gear.</p>'}
+$('jeList').addEventListener('input',ev=>{const t=ev.target;if(!t.dataset.je)return;const e=N(S).jobEq[t.closest('.je').dataset.i];e[t.dataset.je]=t.value;save();renderNotes();
+  if(t.dataset.je==='exp')t.closest('.je').classList.toggle('due',!!dueSoon(t.value))});
+$('jeList').addEventListener('click',async ev=>{const b=ev.target.closest('[data-je-del]');if(!b)return;const i=+b.closest('.je').dataset.i,e=N(S).jobEq[i];
+  if((e.sn||e.exp)&&!await ask('Remove '+(e.name||'item')+'?','Its S/N and expiry will be removed.','Remove'))return;change(()=>N(S).jobEq.splice(i,1));renderJe()});
+$('addJe').onclick=()=>{change(()=>N(S).jobEq.push({id:uid(),name:'',sn:'',exp:''}));renderJe();const l=[...$('jeList').querySelectorAll('[data-je=name]')].pop();l.focus()};
+$('pNotes').addEventListener('input',ev=>{const t=ev.target;
+  if(t.dataset.n){(t.hasAttribute('data-ps')?SD():N(S))[t.dataset.n]=t.value;save();renderNotes()}
+  if(t.dataset.c){SD().checks[t.dataset.c]=t.checked;save();renderNotes()}
+  if(t.dataset.lt){S.lists[t.dataset.lt][+t.dataset.i].t=t.value;save();renderNotes()}
+  if(t.dataset.wt!=null){S.wells[t.dataset.wt].total=t.value.trim();save();renderNotes()}});
+$('pNotes').addEventListener('change',ev=>{if(ev.target.dataset.wt!=null)render()});
+const bullets=t=>(t||'').split('\n').map(l=>l.replace(/^\s*[•\-*]\s*/,'').trim()).filter(Boolean).map(l=>'• '+l);
+const opsEl=document.querySelector('.ops');
+const setOps=(v,pos)=>{opsEl.value=v;opsEl.setSelectionRange(pos,pos);SD().ops=v;save();renderNotes()};
+opsEl.addEventListener('focus',()=>{if(!opsEl.value.trim())setOps('• ',2)});
+opsEl.addEventListener('blur',()=>{if(opsEl.value.trim()==='•')setOps('',0)});
+opsEl.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.shiftKey)return;e.preventDefault();
+  const v=opsEl.value,a=opsEl.selectionStart,b=opsEl.selectionEnd,ls=v.lastIndexOf('\n',a-1)+1,line=v.slice(ls,a);
+  if(/^•\s*$/.test(line)&&a===b){setOps(v.slice(0,ls)+v.slice(a),ls);return}
+  const ins='\n• ';setOps(v.slice(0,a)+ins+v.slice(b),a+ins.length)});
+opsEl.addEventListener('paste',()=>setTimeout(()=>{const v=bullets(opsEl.value).join('\n');setOps(v,v.length)},0));
+const shiftStages=w=>SD().log.filter(e=>e.w===w.id);
+const rem=w=>{const t=parseFloat(w.total);return isNaN(t)?'':Math.max(t-done(w),0)};
+const fmtD=d=>d?new Date(d+'T12:00').toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'';
+const subject=()=>[N(S).unit,N(S).company,N(S).pad].map(x=>(x||'').trim()).filter(Boolean).concat('XO Notes').join(' ');
+function notesText(){const n=N(S),c=SD().checks,L=[];
+  L.push('XO NOTES - '+today()+' - '+SH[VS]);
+  L.push('Company: '+(n.company||''),'Pad: '+(n.pad||''),'Crew: '+(SD().crew||''),'');
+  L.push('Unit: '+(n.unit||'')+'    Trailer: '+(n.trailer||''));
+  L.push('Injector: '+(n.injector||'')+'    Accumulator: '+(n.accum||''));
+  (n.jobEq||[]).forEach(e=>{if(e.sn||e.exp)L.push(e.name+': S/N '+(e.sn||'-')+(e.exp?' (exp '+fmtD(e.exp)+')':''))});L.push('');
+  L.push('STAGES - '+SH[VS]+': '+S.wells.reduce((a,w)=>a+shiftStages(w).length,0)+'    RUNS: '+SD().runs);
+  S.wells.forEach(w=>{const st=shiftStages(w);L.push(w.name+(w.color?' ('+(WCOLORS.find(c=>c[0]===w.color)||['',''])[1]+')':'')+': this shift '+st.length+(st.length?' ('+st.map(s=>s.num+(s.note?' - '+s.note:'')).join(', ')+')':'')+' | completed '+done(w)+(w.total?' of '+w.total+' | remaining '+rem(w):''))});
+  L.push('','WEEKLY CHECKS');S.lists.weekly.forEach(x=>L.push((c[x.id]?'[x] ':'[ ] ')+x.t));
+  L.push('','DAILY DUTIES');S.lists.daily.forEach(x=>L.push((c[x.id]?'[x] ':'[ ] ')+x.t));
+  L.push('','OPERATIONS',...(bullets(SD().ops).length?bullets(SD().ops):['-']));
+  return L.join('\n')}
+function renderNotes(){const tb=$('nWells');if(!tb)return;
+  $('nTitle').textContent=SH[VS]+' shift';$('opsTitle').textContent=SH[VS]+' operations';$('nShiftLbl').textContent=SH[VS]+' · '+today();
+  $('nStages').textContent=S.wells.reduce((a,w)=>a+shiftStages(w).length,0);
+  $('nRuns').textContent=SD().runs;
+  const f=document.activeElement&&document.activeElement.dataset.wt;
+  if(f==null)tb.innerHTML=S.wells.map((w,i)=>{const st=shiftStages(w);return`<tr><td>${wChip(w)}</td><td>${st.length}${st.length?' <small>('+st.map(s=>esc(s.num)).join(', ')+')</small>':''}</td><td class="r"><input data-wt="${i}" value="${esc(w.total||'')}" inputmode="numeric" aria-label="Total stages ${esc(w.name)}"></td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('');
+  const sub=subject();$('subj').textContent='Subject: '+sub;
+  let body=notesText();if(body.length>1800)body=body.slice(0,1800)+'\n...(trimmed - use Copy notes for the full text)';
+  $('mail').href='mailto:'+toList(N(S).to)+'?subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(body)}
+$('tCopy').onclick=()=>copy('Subject: '+techSubj()+'\n\n'+techBody());
+$('nCopy').onclick=()=>copy(subject()+'\n\n'+notesText());
+$('nClear').onclick=async()=>{if(!await ask('Clear for next shift?','Resets this shift\'s stage and run counts and empties its checkboxes and operations notes. Crew, job info, the board and the other shift stay.','Clear'))return;
+  change(()=>{SD().checks={};SD().ops='';SD().log=[];SD().runs=0});fillNotes();toast('Notes cleared')};
+fillNotes();
+try{const t=localStorage.getItem(KEY+'.tab');if(t==='D'||t==='N'||t==='job')document.querySelector('[data-tab='+t+']').click()}catch(e){}
+
+render();
+setInterval(()=>$('date').textContent=today(),60000);
+}
+</script>
+<script>
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+  navigator.serviceWorker.register('sw.js').then(r=>{r.update();
+    r.addEventListener('updatefound',()=>{const w=r.installing;w&&w.addEventListener('statechange',()=>{if(w.state==='activated'&&navigator.serviceWorker.controller){const t=document.getElementById('toast');if(t){t.textContent='White Board updated. Reopen to use the new version.';t.classList.add('on');setTimeout(()=>t.classList.remove('on'),6000)}}})})}).catch(()=>{});
+}
+</script>
+</body>
+</html>
