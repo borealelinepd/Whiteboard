@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>White Board Help</title>
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#eef1f3,#14181c);--board:light-dark(#fff,#1d232a);--ink:light-dark(#16202a,#e8edf2);--mute:light-dark(#5b6873,#9aa6b1);--line:light-dark(#d5dbe0,#33404b);--blue:light-dark(#1554c4,#6ea0ff);--blueBg:light-dark(#e6eefc,#1d2c47);--green:light-dark(#137a3a,#5fd38a);--red:light-dark(#c41f2e,#ff7a85)}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 "Atkinson Hyperlegible",system-ui,sans-serif}
+h1,h2{font-family:Kalam,"Comic Sans MS",cursive;line-height:1.1;margin:0}
+h1{font-size:40px;color:var(--blue)}
+h2{font-size:30px;color:var(--blue);margin:0 0 12px}
+h3{font-size:19px;margin:24px 0 6px}
+.wrap{max-width:900px;margin:auto;padding:0 16px}
+header.hero{background:var(--board);border-bottom:1px solid var(--line);padding:28px 0 20px}
+header.hero p{color:var(--mute);margin:8px 0 0;max-width:62ch}
+nav.toc{position:sticky;top:0;z-index:3;background:var(--board);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.toc a{flex:none;color:var(--mute);text-decoration:none;padding:12px 10px;font-size:15px;border-bottom:3px solid transparent}
+nav.toc a:hover{color:var(--blue);border-bottom-color:var(--blue)}
+section{background:var(--board);border:1px solid var(--line);border-radius:14px;padding:22px clamp(16px,3vw,28px);margin:18px 0}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}li{margin:4px 0}
+figure{margin:14px 0 18px}
+figure img{display:block;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+figure.small img{max-width:min(380px,100%)}
+html{scroll-padding-top:60px}
+.url{overflow-wrap:anywhere}
+section{overflow:hidden}
+figcaption{font-size:14px;color:var(--mute);margin-top:6px}
+.key{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 7px;font-weight:700;font-size:15px;background:var(--bg);white-space:nowrap}
+.days{background:#ffd400;color:#111;border-color:#e0b800}.nights{background:#1a3fb0;color:#fff;border-color:#1a3fb0}
+.tip,.warn{border-radius:10px;padding:12px 14px;margin:14px 0}
+.tip{background:var(--blueBg)}.warn{background:light-dark(#fdecee,#3a1a1f)}
+.tip b:first-child,.warn b:first-child{display:block;margin-bottom:2px}
+table{width:100%;border-collapse:collapse;font-size:16px;margin:10px 0}
+td,th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+th{color:var(--mute);font-weight:700;font-size:14px}
+td:first-child{white-space:nowrap;font-weight:700}
+.top a{color:var(--blue)}
+footer{color:var(--mute);font-size:14px;padding:10px 0 40px}
+@media(max-width:600px){h1{font-size:32px}h2{font-size:26px}td:first-child{white-space:normal}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>White Board help</h1>
+  <p>How to use the run counter, stage count and Days / Nights XO notes. Screenshots use made-up sample data.</p>
+</div></header>
+
+<nav class="toc" aria-label="Sections"><div class="wrap">
+  <a href="#start">Getting started</a><a href="#shift">Days / Nights</a><a href="#bar">Top bar</a><a href="#job">Job Info</a><a href="#board">Board</a><a href="#xo">XO notes</a><a href="#more">More menu</a><a href="#routine">Shift routine</a><a href="#data">Saving &amp; tips</a>
+</div></nav>
+
+<main class="wrap">
+
+<section id="start">
+  <h2>Getting started</h2>
+  <p>White Board replaces the Excel white board. It counts runs on each tool, keeps the stage count for each well for tickets, and builds the XO notes for crew change.</p>
+  <h3>Install it on the PC (once)</h3>
+  <ol>
+    <li>Open <b class="url">https://borealelinepd.github.io/whiteboard/</b> in <b>Microsoft Edge</b>.</li>
+    <li>Click the green <span class="key">⬇ Install</span> button at the top.</li>
+    <li>In Edge's box, tick <b>Pin to taskbar</b> and <b>Create desktop shortcut</b>, then <b>Allow</b>.</li>
+  </ol>
+  <figure class="small"><img src="help/install.png" alt="Install White Board steps window"><figcaption>If Edge doesn't show its own install box, the button shows these steps instead.</figcaption></figure>
+  <p>From then on, open White Board from its icon. It opens in its own window and works without internet. Updates arrive on their own the next time it's opened with a connection.</p>
+</section>
+
+<section id="shift">
+  <h2>The Days / Nights switch</h2>
+  <figure class="small"><img src="help/shift-switch.png" alt="Days and Nights switch with Days selected in yellow"></figure>
+  <p>This is the most important button in the app. It tells White Board <b>which crew is working right now</b>. Yellow <span class="key days">☀ Days</span> means day shift; blue <span class="key nights">☾ Nights</span> means night shift.</p>
+  <p>Every stage you add and every <span class="key">+1 run</span> you press is tagged with the shift that's selected. That's how the Days XO and Nights XO tabs know which stages and runs belong to which crew.</p>
+  <div class="warn"><b>Switch it at crew change.</b>It doesn't change by itself. If nights forgets to switch, their stages get counted on the Days XO notes. Each stage shows a small <b>D</b> or <b>N</b> tag so you can check.</div>
+  <figure><img src="help/header-nights.png" alt="Top bar with Nights selected in blue"><figcaption>Nights selected: the switch turns blue.</figcaption></figure>
+  <p>Got a stage on the wrong shift? Tap the stage, <b>Delete</b> it, switch to the right shift, and add it again.</p>
+</section>
+
+<section id="bar">
+  <h2>The top bar</h2>
+  <figure><img src="help/header-days.png" alt="Top bar with tabs, Days selected, Install, Undo, New day and More"></figure>
+  <table>
+    <tr><th>Button</th><th>What it does</th></tr>
+    <tr><td>Job Info · Board · Days XO · Nights XO</td><td>The four tabs. The app opens on whichever tab you used last.</td></tr>
+    <tr><td><span class="key days">Days</span> <span class="key nights">Nights</span></td><td>Current shift. See <a href="#shift">Days / Nights</a> above.</td></tr>
+    <tr><td><span class="key">⬇ Install</span></td><td>Installs White Board on the PC. Hidden once you're using the installed app.</td></tr>
+    <tr><td><span class="key">↶ Undo</span></td><td>Takes back the last change. Press again to go back further. Also <b>Ctrl+Z</b>. Undo history is lost when the app is closed.</td></tr>
+    <tr><td><span class="key">New day</span></td><td>Clears today's stages from the Board at the start of a new ticket day. See <a href="#routine">Shift routine</a>.</td></tr>
+    <tr><td><span class="key">⋯ More</span></td><td>Past days, Backup, Restore, New job and this Help page. See <a href="#more">More menu</a>.</td></tr>
+  </table>
+</section>
+
+<section id="job">
+  <h2>Job Info tab</h2>
+  <p>Fill this in once at the start of a job. It stays until you start a <b>New job</b>.</p>
+  <figure><img src="help/job-info.png" alt="Job Info tab with unit, company, pad and certified equipment"></figure>
+  <ul>
+    <li><b>Unit, Company, Pad</b> make up the email subject, for example "Unit 12 Example Energy Ltd. 14-22 Pad XO Notes".</li>
+    <li><b>Packages, sheaves &amp; certified equipment</b>: S/N and expiry for the lube package, latch package and sheaves. <span class="key">+ Add equipment</span> adds a row; <b>✕</b> removes one.</li>
+    <li>An expiry date <b>within 30 days turns red</b>, here and on the printed XO notes.</li>
+    <li>Only items with an S/N or date filled in go on the XO notes.</li>
+  </ul>
+</section>
+
+<section id="board">
+  <h2>Board tab</h2>
+  <h3>Run counter</h3>
+  <figure><img src="help/run-counter.png" alt="Run counter with Cable Head, Pack Off and BRT"></figure>
+  <ul>
+    <li><b>Ticked</b> items are on the string. <span class="key">+1 run</span> adds one run to every ticked item. <span class="key">−1 run</span> takes one off, for a mistake.</li>
+    <li>The <span class="key">−</span> <span class="key">+</span> beside an item change just that item.</li>
+    <li><b>Untick</b> an item to take it off the string. It moves into <b>Not on the string</b> and keeps its count. Click that line to open it and tick the item back on.</li>
+    <li><span class="key">+ Add</span> adds equipment (a second BRT, a CCL). Each one except Cable Head and Pack Off gets an <b>S/N</b> and <b>Additional notes</b>. <b>✕</b> removes an item.</li>
+    <li><span class="key">Email Tech</span> emails the whole run counter, with S/Ns, run counts and notes, to the tech team. Send it at the end of a job, before <b>New job</b>.</li>
+  </ul>
+  <figure><img src="help/run-counter-open.png" alt="Run counter with Not on the string opened showing Swivel"><figcaption>Not on the string opened, showing the Swivel with its S/N, note and count.</figcaption></figure>
+  <figure class="small"><img src="help/email-tech.png" alt="Email run counter to Tech window with preview"><figcaption>Email Tech shows a preview. The tech addresses are filled in already; change them if needed.</figcaption></figure>
+
+  <h3>Wells</h3>
+  <figure><img src="help/wells.png" alt="Four coloured well columns with stages"></figure>
+  <ul>
+    <li><b>Number of wells</b> <span class="key">−</span> <span class="key">+</span> sets how many columns there are. Removing a well asks first if it has stages.</li>
+    <li>Type the well name at the top of each column, and the <b>Zero @</b>.</li>
+    <li>The round button picks the <b>well colour</b> (same colours as the Boreal Notes workbook). The colour shows on the XO notes too.</li>
+    <li><span class="key">+ Stage 19</span> adds the next stage number. Numbers carry on from the last stage, even after New day.</li>
+    <li>Bottom of each column: Days and Nights stages today, then today's total · completed / total stages.</li>
+  </ul>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
+    <figure class="small"><img src="help/stage-edit.png" alt="Stage edit window with number, highlight and note"><figcaption>Tap a stage to change its number, highlight it, add a note, or delete it.</figcaption></figure>
+    <figure class="small"><img src="help/well-colour.png" alt="Well colour picker with named colours"><figcaption>Well colours.</figcaption></figure>
+  </div>
+
+  <h3>Today's tickets</h3>
+  <figure><img src="help/tickets.png" alt="Today's tickets table with stages per well, Days and Nights"></figure>
+  <p>The stage count for the ticket day, split by Days and Nights. <span class="key">Copy summary</span> copies it as text to paste anywhere.</p>
+</section>
+
+<section id="xo">
+  <h2>Days XO and Nights XO tabs</h2>
+  <p>Each shift has its own XO notes. They fill in from the Board, so mostly you add the crew, tick the checks and write the operations notes.</p>
+  <figure><img src="help/xo-shift.png" alt="Days shift summary with stages, runs and wells table"></figure>
+  <ul>
+    <li><b>Crew</b>: each shift keeps its own crew names.</li>
+    <li><b>Stages</b> and <b>Runs</b>: this shift's totals.</li>
+    <li><b>Total stages</b>: type it once per well. Both XO tabs share it.</li>
+    <li><b>Completed</b> is the highest stage number done. <b>Remaining</b> = total stages − completed.</li>
+  </ul>
+  <div class="tip"><b>Night shift past midnight</b>The XO tabs keep their counts until <b>Clear for next shift</b>, so pressing New day at midnight doesn't lose the stages nights did before midnight.</div>
+
+  <h3>Checks</h3>
+  <figure><img src="help/xo-checks.png" alt="Weekly checks and daily duties checkboxes"></figure>
+  <p><span class="key">Edit list</span> lets you rename, add or remove tasks. Press <span class="key">Done</span> when finished. Both shifts use the same lists, and they stay for the next job.</p>
+  <figure><img src="help/xo-edit-list.png" alt="Daily duties in edit mode with text boxes and Add task"></figure>
+
+  <h3>Operations notes and sending</h3>
+  <figure><img src="help/xo-operations.png" alt="Operations notes as bullets with email, print, copy and clear buttons"></figure>
+  <ul>
+    <li>Notes are bullets. <b>Enter</b> starts a new bullet; Enter on an empty bullet ends the list.</li>
+    <li><b>Email to</b> is filled in with pdreports@bonnettsenergy.com. Add more addresses with <b>;</b> or <b>,</b>.</li>
+    <li><span class="key">Share as email</span> opens your email app with the subject and the full notes in the email.</li>
+    <li><span class="key">Print / Save PDF</span> prints the notes on one page with the Boreal logo. To make a PDF, pick <b>Save as PDF</b> or <b>Microsoft Print to PDF</b> as the printer. The file name is already set to the email subject.</li>
+    <li><span class="key">Copy notes</span> copies the notes as text, if the email button doesn't open your email app.</li>
+    <li><span class="key">Clear for next shift</span> resets this tab's stages, runs, checks and operations notes. Crew, job info, the Board and the other shift aren't touched.</li>
+  </ul>
+  <figure><img src="help/print-example.png" alt="Printed XO notes page with logo, job info, equipment, wells, checks and operations" style="max-width:520px"><figcaption>What Print / Save PDF gives you.</figcaption></figure>
+</section>
+
+<section id="more">
+  <h2>More menu</h2>
+  <figure class="small"><img src="help/more.png" alt="More menu with Past days, Backup, Restore, New job and Help"></figure>
+  <table>
+    <tr><th>Button</th><th>What it does</th></tr>
+    <tr><td>Past days</td><td>The stages from each day cleared with New day (last 60 days), by well.</td></tr>
+    <tr><td>Backup (copy)</td><td>Copies everything in White Board as text. Paste it into an email or a note to keep it safe. Do this before moving to a new PC or clearing the browser.</td></tr>
+    <tr><td>Restore</td><td>Paste a backup to load it. <b>This replaces everything</b> on this PC's board.</td></tr>
+    <tr><td>New job…</td><td>Starts a fresh job. See below.</td></tr>
+    <tr><td>Help</td><td>Opens this page.</td></tr>
+  </table>
+  <h3>New job</h3>
+  <figure class="small"><img src="help/new-job.png" alt="Start a new job window with Keep equipment run counts option"></figure>
+  <p>Clears the wells, stages, total stages, well colours, job info, S/Ns and expiry dates, both XO notes and past days. The equipment list and the check lists stay. Run counts go to 0 unless you tick <b>Keep equipment run counts</b>.</p>
+  <div class="warn"><b>Send tool runs first.</b>Use <span class="key">Email Tech</span> on the Board before starting a new job. Undo can bring the old job back, but only until the app is closed.</div>
+</section>
+
+<section id="routine">
+  <h2>Shift routine</h2>
+  <h3>Start of shift</h3>
+  <ol>
+    <li>Set the <b>Days / Nights</b> switch to your shift.</li>
+    <li>On your XO tab, check the crew names.</li>
+    <li>On the Board, make sure the right tools are ticked in the run counter.</li>
+  </ol>
+  <h3>During the shift</h3>
+  <ul>
+    <li>Press <span class="key">+1 run</span> each run, and <span class="key">+ Stage</span> on the well each stage.</li>
+    <li>Tap a stage to flag anything unusual with a colour or note.</li>
+  </ul>
+  <h3>New ticket day (usually midnight)</h3>
+  <figure class="small"><img src="help/new-day.png" alt="Start a new day confirmation"></figure>
+  <p><span class="key">New day</span> saves today's stages to Past days and clears them off the Board, ready for the next ticket. Wells, zeros, total stages, colours, run counts and the XO notes stay.</p>
+  <h3>End of shift</h3>
+  <ol>
+    <li>Finish the checks and operations notes on your XO tab.</li>
+    <li><span class="key">Share as email</span> and/or <span class="key">Print / Save PDF</span>.</li>
+    <li><span class="key">Clear for next shift</span> on <b>your</b> XO tab.</li>
+    <li>Switch <b>Days / Nights</b> for the next crew, or leave it for them to do.</li>
+  </ol>
+  <h3>End of job</h3>
+  <ol>
+    <li><span class="key">Email Tech</span> on the Board.</li>
+    <li><span class="key">⋯ More</span> → <span class="key">Backup</span> if you want a copy of the job.</li>
+    <li><span class="key">⋯ More</span> → <span class="key">New job…</span></li>
+  </ol>
+</section>
+
+<section id="data">
+  <h2>Where things are saved, and tips</h2>
+  <ul>
+    <li><b>Everything saves on its own</b>, on this PC only. Other PCs and the office can't see it.</li>
+    <li><b>Always open White Board the same way</b>, from its installed icon. Opening it in a different browser shows an empty board.</li>
+    <li><b>Clearing Edge's browsing data or site data erases the board.</b> Do a Backup first.</li>
+    <li><b>New PC?</b> Backup on the old one, install on the new one, then Restore.</li>
+    <li><b>No internet?</b> It still works. Emails wait in your email app until there's a connection.</li>
+    <li><b>Email button does nothing?</b> Use Copy notes and paste into an email.</li>
+    <li><b>"White Board updated"</b> means a newer version loaded. Close and reopen to use it.</li>
+  </ul>
+</section>
+
+<footer>White Board · <a href="./">Open the app</a></footer>
+</main>
+</body>
+</html>
