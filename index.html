@@ -42,6 +42,7 @@ main{padding:12px max(3vw,12px) 40px;display:grid;gap:14px;max-width:1500px;marg
 .card{background:var(--board);border:1px solid var(--line);border-radius:12px;padding:14px}
 .head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
 .head .sp{flex:1}
+.top .inst{background:#137a3a;color:#fff;border-color:#137a3a;font-weight:700}
 .mini{min-height:32px;font-size:13px;padding:0 10px}
 .runcard{padding:10px 14px}.runcard .head{margin-bottom:6px}
 .runbtn{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:700;font-size:17px;min-height:42px;padding:0 18px}
@@ -158,6 +159,7 @@ textarea{width:100%;min-height:120px;font:13px/1.3 ui-monospace,monospace;border
   <nav class="tabs" role="tablist"><button role="tab" data-tab="job" aria-selected="false">Job Info</button><button role="tab" data-tab="board" aria-selected="true">Board</button><button role="tab" data-tab="D" aria-selected="false">Days XO</button><button role="tab" data-tab="N" aria-selected="false">Nights XO</button></nav>
     <div class="seg" title="Current shift. New stages and runs get tagged with it."><button data-shift="D"><span class="ic">☀ </span>Days</button><button data-shift="N"><span class="ic">☾ </span>Nights</button></div>
     <div class="tools">
+      <button id="installBtn" class="inst" hidden title="Install White Board on this PC">⬇<span class="lg"> Install</span></button>
       <button id="undo" title="Undo last change (Ctrl+Z)" aria-label="Undo">↶<span class="lg"> Undo</span></button>
       <button id="newday">New day</button>
       <button id="more" title="More" aria-label="More">⋯<span class="lg"> More</span></button>
@@ -254,6 +256,14 @@ textarea{width:100%;min-height:120px;font:13px/1.3 ui-monospace,monospace;border
   <pre id="tPrev" style="white-space:pre-wrap;font:13px/1.4 ui-monospace,monospace;background:var(--bg);border-radius:6px;padding:8px;margin:10px 0 0;max-height:30vh;overflow:auto"></pre>
   <div class="row"><button id="tClose">Close</button><button id="tCopy">Copy</button><a class="mail" id="tMail" href="#">Email</a></div></dialog>
 <dialog id="dlgWell"><h2 id="wcTitle">Well colour</h2><div class="wsw" id="wcSw"></div><div class="row"><button id="wcClose">Close</button></div></dialog>
+<dialog id="dlgInst"><h2>Install White Board</h2>
+  <p>Put White Board on this PC so it opens in its own window from the desktop and taskbar, and works without internet.</p>
+  <ol style="padding-left:20px;margin:0">
+    <li>In Edge, click <b>⋯</b> (top right) → <b>Apps</b> → <b>Install White Board</b>.</li>
+    <li>In the box that pops up, tick <b>Pin to taskbar</b> and <b>Create desktop shortcut</b>, then <b>Allow</b>.</li>
+  </ol>
+  <p class="hint">Already installed? Open it from the White Board icon instead of the browser.</p>
+  <div class="row"><button class="primary" id="instClose">OK</button></div></dialog>
 <dialog id="dlgAsk"><h2 id="aTitle"></h2><p id="aText"></p><div class="row"><button id="aNo">Cancel</button><button class="primary" id="aYes">OK</button></div></dialog>
 
 <dialog id="dlgMore"><h2>More</h2>
@@ -502,9 +512,17 @@ setInterval(()=>$('date').textContent=today(),60000);
 }
 </script>
 <script>
+{let deferred=null;const btn=document.getElementById('installBtn');
+  const standalone=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: window-controls-overlay)').matches||navigator.standalone;
+  if(!standalone()&&location.protocol.startsWith('http'))btn.hidden=false;
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;btn.hidden=false});
+  addEventListener('appinstalled',()=>{btn.hidden=true;deferred=null;const t=document.getElementById('toast');if(t){t.textContent='Installed. Open White Board from the desktop or taskbar.';t.classList.add('on');setTimeout(()=>t.classList.remove('on'),5000)}});
+  btn.onclick=async()=>{if(deferred){deferred.prompt();const r=await deferred.userChoice;deferred=null;if(r.outcome==='accepted')btn.hidden=true}else document.getElementById('dlgInst').showModal()};
+  document.getElementById('instClose').onclick=()=>document.getElementById('dlgInst').close();}
+const hadSW=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
   navigator.serviceWorker.register('sw.js').then(r=>{r.update();
-    r.addEventListener('updatefound',()=>{const w=r.installing;w&&w.addEventListener('statechange',()=>{if(w.state==='activated'&&navigator.serviceWorker.controller){const t=document.getElementById('toast');if(t){t.textContent='White Board updated. Reopen to use the new version.';t.classList.add('on');setTimeout(()=>t.classList.remove('on'),6000)}}})})}).catch(()=>{});
+    r.addEventListener('updatefound',()=>{const w=r.installing;w&&w.addEventListener('statechange',()=>{if(w.state==='activated'&&hadSW){const t=document.getElementById('toast');if(t){t.textContent='White Board updated. Reopen to use the new version.';t.classList.add('on');setTimeout(()=>t.classList.remove('on'),6000)}}})})}).catch(()=>{});
 }
 </script>
 </body>
