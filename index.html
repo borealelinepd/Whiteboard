@@ -117,6 +117,11 @@ textarea{width:100%;min-height:120px;font:13px/1.3 ui-monospace,monospace;border
 .top .seg button[data-shift=D]{background:light-dark(#fff8d6,#3a3210);color:light-dark(#6b5600,#f5d96b)}
 .top .seg button[data-shift=N]{background:light-dark(#e3ebff,#17224a);color:light-dark(#1d3f9e,#9bb5ff)}
 .top .seg button[data-shift=D][aria-pressed=true]{background:#ffd400;color:#111}
+.sseg{display:inline-flex;margin-top:4px}.sseg button{min-height:40px;padding:0 14px}
+.sseg button[data-ss=D]{background:light-dark(#fff8d6,#3a3210);color:light-dark(#6b5600,#f5d96b)}
+.sseg button[data-ss=N]{background:light-dark(#e3ebff,#17224a);color:light-dark(#1d3f9e,#9bb5ff)}
+.sseg button[data-ss=D][aria-pressed=true]{background:#ffd400;color:#111;font-weight:700}
+.sseg button[data-ss=N][aria-pressed=true]{background:#1a3fb0;color:#fff;font-weight:700}
 .top .seg button[data-shift=N][aria-pressed=true]{background:#1a3fb0;color:#fff}
 .top .seg:has([data-shift=D][aria-pressed=true]){border-color:#e0b800}
 .top .seg:has([data-shift=N][aria-pressed=true]){border-color:#1a3fb0}
@@ -262,6 +267,7 @@ textarea{width:100%;min-height:120px;font:13px/1.3 ui-monospace,monospace;border
 <dialog id="dlgStage"><form method="dialog" id="fStage">
   <h2 id="sTitle">Stage</h2>
   <label class="lbl" for="sNum">Stage number / ID</label><input id="sNum" autocomplete="off">
+  <div class="lbl" style="margin-top:10px">Shift</div><div class="seg sseg" id="sShift"><button type="button" data-ss="D">☀ Days</button><button type="button" data-ss="N">☾ Nights</button></div>
   <div class="lbl" style="margin-top:10px">Highlight</div><div class="sw" id="sSw"></div>
   <label class="lbl" for="sNote">Note / identifier</label><input id="sNote" placeholder="e.g. misfire, re-run, plug only" autocomplete="off">
   <div class="row"><button type="button" class="danger" id="sDel">Delete</button><span style="flex:1"></span><button type="button" id="sCancel">Cancel</button><button class="primary" id="sSave">Save</button></div>
@@ -423,9 +429,14 @@ $('sSw').innerHTML=COLORS.map(([c,n])=>`<button type="button" data-c="${c}" titl
 $('sSw').onclick=ev=>{const b=ev.target.closest('button');if(!b)return;pick=b.dataset.c;paintSw()};
 const paintSw=()=>$('sSw').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===pick));
 function openStage(wi,si){cur=[wi,si];const s=S.wells[wi].stages[si];$('sTitle').textContent=S.wells[wi].name+' · stage';
-  $('sNum').value=s.num;$('sNote').value=s.note;pick=s.color;paintSw();$('dlgStage').showModal()}
+  $('sNum').value=s.num;$('sNote').value=s.note;pick=s.color;paintSw();pickSh=s.shift||S.shift;paintSh();$('dlgStage').showModal()}
+let pickSh='D';const paintSh=()=>$('sShift').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ss===pickSh));
+$('sShift').onclick=ev=>{const b=ev.target.closest('button');if(!b)return;pickSh=b.dataset.ss;paintSh()};
 $('fStage').onsubmit=ev=>{ev.preventDefault();const[wi,si]=cur;const s=S.wells[wi].stages[si];
-  change(()=>{s.num=$('sNum').value.trim()||s.num;s.note=$('sNote').value.trim();s.color=pick;const[,e]=logEntry(s.id);if(e){e.num=s.num;e.note=s.note}});$('dlgStage').close()};
+  const moved=pickSh!==s.shift;
+  change(()=>{s.num=$('sNum').value.trim()||s.num;s.note=$('sNote').value.trim();s.color=pick;const[k,e]=logEntry(s.id);if(e){e.num=s.num;e.note=s.note}
+    if(moved){if(e)shD(k).log=shD(k).log.filter(y=>y!==e);shD(pickSh).log.push({sid:s.id,w:S.wells[wi].id,num:s.num,note:s.note});s.shift=pickSh}});
+  $('dlgStage').close();if(moved)toast('Stage '+s.num+' moved to '+SH[pickSh])};
 $('sCancel').onclick=()=>$('dlgStage').close();
 $('sDel').onclick=()=>{const[wi,si]=cur;change(()=>{const[x]=S.wells[wi].stages.splice(si,1);const[k,e]=logEntry(x.id);if(e)shD(k).log=shD(k).log.filter(y=>y!==e)});$('dlgStage').close();toast('Stage deleted')};
 
