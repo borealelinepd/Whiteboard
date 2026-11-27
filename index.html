@@ -128,6 +128,7 @@ textarea{width:100%;min-height:120px;font:13px/1.3 ui-monospace,monospace;border
 .sh{font-size:11px;font-weight:700;border-radius:4px;padding:1px 4px;background:var(--blueBg);color:var(--blue);margin-left:auto}
 .stg[data-c] .sh{background:#fff8;color:#16202a}
 .shiftbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.rempill{margin-left:auto;background:var(--greenBg);color:var(--green)}
 .pill{background:var(--blueBg);color:var(--blue);border-radius:10px;padding:6px 12px;font-size:14px}
 .pill b{font-size:22px;margin-left:4px;font-variant-numeric:tabular-nums}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
@@ -162,7 +163,7 @@ textarea{width:100%;min-height:120px;font:13px/1.3 ui-monospace,monospace;border
 .xo-doc th{background:#e9eef6}
 .xo-doc td.k{background:#f3f5f8;font-weight:700;white-space:nowrap;width:1%}
 .xo-doc .r{text-align:right}
-.xo-doc .tot{display:flex;gap:10pt;margin-top:6pt}.xo-doc .tot div{border:.75pt solid #333;padding:3pt 10pt;font-weight:700}.xo-doc .tot b{font-size:14pt;margin-left:6pt}
+.xo-doc .tot{display:flex;gap:10pt;margin-top:6pt}.xo-doc .tot div{border:.75pt solid #333;padding:3pt 10pt;font-weight:700}.xo-doc .tot b{font-size:14pt;margin-left:6pt}.xo-doc .tot .rt{margin-left:auto}
 .xo-doc .cols{display:grid;grid-template-columns:1fr 1fr;gap:4pt 18pt}
 .xo-doc .ck{display:flex;gap:6pt}
 .xo-doc ul{margin:3pt 0 0;padding-left:16pt}.xo-doc li{margin:2pt 0}
@@ -246,8 +247,8 @@ textarea{width:100%;min-height:120px;font:13px/1.3 ui-monospace,monospace;border
   <section class="card">
     <div class="head"><h2 id="nTitle">This shift</h2><span class="sp"></span><span class="lbl" id="nShiftLbl"></span></div>
     <label class="lbl" style="margin-bottom:10px">Crew <input data-n="crew" data-ps style="max-width:320px" aria-label="Crew on this shift"></label>
-    <div class="shiftbar"><span class="pill">Stages<b id="nStages">0</b></span><span class="pill">Runs<b id="nRuns">0</b></span></div>
     <table class="sum"><thead><tr><th>Well</th><th>This shift</th><th class="r">Total stages</th><th class="r">Completed</th><th class="r">Remaining</th></tr></thead><tbody id="nWells"></tbody></table>
+    <div class="shiftbar" style="margin:10px 0 0"><span class="pill">Stages<b id="nStages">0</b></span><span class="pill">Runs<b id="nRuns">0</b></span><span class="pill rempill" id="nRemBox">Total remaining<b id="nRem">0</b></span></div>
     <p class="hint">Completed is the highest stage number done on that well. Remaining is total stages minus completed. Total stages is kept with the well.</p>
   </section>
   <section class="card">
@@ -519,6 +520,7 @@ opsEl.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.shiftKey)return;e.pre
   const ins='\n• ';setOps(v.slice(0,a)+ins+v.slice(b),a+ins.length)});
 opsEl.addEventListener('paste',()=>setTimeout(()=>{const v=bullets(opsEl.value).join('\n');setOps(v,v.length)},0));
 const shiftStages=w=>SD().log.filter(e=>e.w===w.id);
+const remTot=()=>{const r=S.wells.map(rem).filter(x=>x!=='');return r.length?r.reduce((a,b)=>a+b,0):''};
 const rem=w=>{const t=parseInt(w.total,10);return isNaN(t)?'':Math.max(t-done(w),0)};
 const fmtD=d=>d?new Date(d+'T12:00').toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'';
 const subject=()=>[N(S).unit,N(S).company,N(S).pad].map(x=>(x||'').trim()).filter(Boolean).concat('XO Notes').join(' ');
@@ -527,7 +529,7 @@ function notesText(){const n=N(S),c=SD().checks,L=[];
   L.push('Company: '+(n.company||''),'Pad: '+(n.pad||''),'Crew: '+(SD().crew||''),'');
   L.push('Unit: '+(n.unit||'')+'    Trailer: '+(n.trailer||''));
   (n.jobEq||[]).forEach(e=>{if(e.sn||e.exp)L.push(e.name+': '+(e.sn||'-')+(e.exp?' (exp '+fmtD(e.exp)+')':''))});L.push('');
-  L.push('STAGES - '+SH[VS]+': '+S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)+'    RUNS: '+SD().runs);
+  L.push('STAGES - '+SH[VS]+': '+S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)+'    RUNS: '+SD().runs+(remTot()!==''?'    TOTAL REMAINING: '+remTot():''));
   S.wells.forEach(w=>{const st=shiftStages(w);L.push(w.name+(w.color?' ('+(WCOLORS.find(c=>c[0]===w.color)||['',''])[1]+')':'')+': this shift '+(st.length?st.map(s=>s.num+(s.note?' ('+s.note+')':'')).join(', '):'none')+' | completed '+done(w)+(w.total?' of '+w.total+' | remaining '+rem(w):''))});
   L.push('','WEEKLY CHECKS');S.lists.weekly.forEach(x=>L.push((c[x.id]?'[x] ':'[ ] ')+x.t));
   L.push('','DAILY DUTIES');S.lists.daily.forEach(x=>L.push((c[x.id]?'[x] ':'[ ] ')+x.t));
@@ -536,7 +538,7 @@ function notesText(){const n=N(S),c=SD().checks,L=[];
 function renderNotes(){const tb=$('nWells');if(!tb)return;
   $('nTitle').textContent=SH[VS]+' shift';$('opsTitle').textContent=SH[VS]+' operations';$('nShiftLbl').textContent=SH[VS]+' · '+today();
   $('nStages').textContent=S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0);
-  $('nRuns').textContent=SD().runs;
+  $('nRuns').textContent=SD().runs;{const t=remTot();$('nRem').textContent=t;$('nRemBox').hidden=t===''}
   const f=document.activeElement&&document.activeElement.dataset.wt;
   if(f==null)tb.innerHTML=S.wells.map((w,i)=>{const st=shiftStages(w);return`<tr><td>${wChip(w)}</td><td>${st.length?st.map(s=>esc(s.num)).join(', '):'—'}</td><td class="r"><input data-wt="${i}" value="${esc(w.total||'')}" inputmode="numeric" aria-label="Total stages ${esc(w.name)}"></td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('');
   const sub=subject();$('subj').textContent='Subject: '+sub;
@@ -555,7 +557,7 @@ function buildDoc(){const n=N(S),c=SD().checks,e=esc,box=v=>v?'☒':'☐';
   ${eq.length?`<h2>Packages &amp; equipment</h2><table><tr><th>Item</th><th>S/N or Color</th><th>Expiry</th></tr>${eq.map(x=>`<tr><td>${e(x.name)}</td><td>${e(x.sn)}</td><td class="${dueSoon(x.exp)?'ex':''}">${e(fmtD(x.exp))}</td></tr>`).join('')}</table>`:''}
   <h2>Wells</h2><table><tr><th>Well</th><th>This shift</th><th class="r">Total stages</th><th class="r">Completed</th><th class="r">Remaining</th></tr>
   ${S.wells.map(w=>{const st=shiftStages(w);return`<tr><td>${chip(w)}</td><td>${st.length?st.map(x=>e(x.num)+(x.note?' ('+e(x.note)+')':'')).join(', '):'—'}</td><td class="r">${e(w.total||'')}</td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('')}</table>
-  <div class="tot"><div>Stages this shift<b>${S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)}</b></div><div>Runs this shift<b>${SD().runs}</b></div></div>
+  <div class="tot"><div>Stages this shift<b>${S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)}</b></div><div>Runs this shift<b>${SD().runs}</b></div>${remTot()!==''?`<div class="rt">Total remaining<b>${remTot()}</b></div>`:''}</div>
   <h2>Checks</h2><div class="cols"><div><b>Weekly checks</b>${S.lists.weekly.map(x=>`<div class="ck"><span>${box(c[x.id])}</span><span>${e(x.t)}</span></div>`).join('')}</div>
   <div><b>Daily duties</b>${S.lists.daily.map(x=>`<div class="ck"><span>${box(c[x.id])}</span><span>${e(x.t)}</span></div>`).join('')}</div></div>
   <h2>Operations</h2>${ops.length?`<ul>${ops.map(o=>`<li>${e(o.replace(/^•\s*/,''))}</li>`).join('')}</ul>`:'<p>-</p>'}`}
