@@ -494,7 +494,7 @@ document.querySelector('#pJob').addEventListener('input',ev=>{const t=ev.target;
 const dueSoon=d=>d&&(new Date(d+'T12:00')-new Date())/864e5<30;
 function renderJe(){$('jeList').innerHTML=N(S).jobEq.map((e,i)=>`<div class="je ${dueSoon(e.exp)?'due':''}" data-i="${i}">
   <label class="nm2">Item<input data-je="name" value="${esc(e.name)}"></label>
-  <label>S/N<input data-je="sn" value="${esc(e.sn)}"></label>
+  <label>S/N or Color<input data-je="sn" value="${esc(e.sn)}"></label>
   <label>Expiry (if applicable)<input type="date" data-je="exp" value="${esc(e.exp)}"></label>
   <button class="x" data-je-del title="Remove" aria-label="Remove ${esc(e.name)}">✕</button></div>`).join('')||'<p class="hint">No items. Add packages, sheaves or other equipment.</p>'}
 $('jeList').addEventListener('input',ev=>{const t=ev.target;if(!t.dataset.je)return;const e=N(S).jobEq[t.closest('.je').dataset.i];e[t.dataset.je]=t.value;save();renderNotes();
@@ -526,7 +526,7 @@ function notesText(){const n=N(S),c=SD().checks,L=[];
   L.push('XO NOTES - '+today()+' - '+SH[VS]);
   L.push('Company: '+(n.company||''),'Pad: '+(n.pad||''),'Crew: '+(SD().crew||''),'');
   L.push('Unit: '+(n.unit||'')+'    Trailer: '+(n.trailer||''));
-  (n.jobEq||[]).forEach(e=>{if(e.sn||e.exp)L.push(e.name+': S/N '+(e.sn||'-')+(e.exp?' (exp '+fmtD(e.exp)+')':''))});L.push('');
+  (n.jobEq||[]).forEach(e=>{if(e.sn||e.exp)L.push(e.name+': '+(e.sn||'-')+(e.exp?' (exp '+fmtD(e.exp)+')':''))});L.push('');
   L.push('STAGES - '+SH[VS]+': '+S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)+'    RUNS: '+SD().runs);
   S.wells.forEach(w=>{const st=shiftStages(w);L.push(w.name+(w.color?' ('+(WCOLORS.find(c=>c[0]===w.color)||['',''])[1]+')':'')+': this shift '+cnt(st)+(st.length?' ('+st.map(s=>s.num+(s.note?' - '+s.note:'')).join(', ')+')':'')+' | completed '+done(w)+(w.total?' of '+w.total+' | remaining '+rem(w):''))});
   L.push('','WEEKLY CHECKS');S.lists.weekly.forEach(x=>L.push((c[x.id]?'[x] ':'[ ] ')+x.t));
@@ -552,7 +552,7 @@ function buildDoc(){const n=N(S),c=SD().checks,e=esc,box=v=>v?'☒':'☐';
   <tr><td class="k">Company</td><td>${e(n.company)}</td><td class="k">Pad</td><td>${e(n.pad)}</td></tr>
   <tr><td class="k">Unit</td><td>${e(n.unit)}</td><td class="k">Trailer</td><td>${e(n.trailer)}</td></tr>
   <tr><td class="k">Crew</td><td colspan="3">${e(SD().crew)}</td></tr></table>
-  ${eq.length?`<h2>Packages &amp; equipment</h2><table><tr><th>Item</th><th>S/N</th><th>Expiry</th></tr>${eq.map(x=>`<tr><td>${e(x.name)}</td><td>${e(x.sn)}</td><td class="${dueSoon(x.exp)?'ex':''}">${e(fmtD(x.exp))}</td></tr>`).join('')}</table>`:''}
+  ${eq.length?`<h2>Packages &amp; equipment</h2><table><tr><th>Item</th><th>S/N or Color</th><th>Expiry</th></tr>${eq.map(x=>`<tr><td>${e(x.name)}</td><td>${e(x.sn)}</td><td class="${dueSoon(x.exp)?'ex':''}">${e(fmtD(x.exp))}</td></tr>`).join('')}</table>`:''}
   <h2>Wells</h2><table><tr><th>Well</th><th>This shift</th><th class="r">Total stages</th><th class="r">Completed</th><th class="r">Remaining</th></tr>
   ${S.wells.map(w=>{const st=shiftStages(w);return`<tr><td>${chip(w)}</td><td>${cnt(st)}${st.length?' &nbsp;('+st.map(x=>e(x.num)+(x.note?' - '+e(x.note):'')).join(', ')+')':''}</td><td class="r">${e(w.total||'')}</td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('')}</table>
   <div class="tot"><div>Stages this shift<b>${S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)}</b></div><div>Runs this shift<b>${SD().runs}</b></div></div>
