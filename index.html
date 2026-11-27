@@ -329,6 +329,7 @@ const toList=t=>(t||'').split(/[;,\s]+/).filter(Boolean).map(encodeURIComponent)
 const norm=()=>{S.runs=S.runs||[];S.notes=S.notes||{};if(!S.notes.to)S.notes.to=XO_TO;if(!S.techTo)S.techTo=TECH_TO;if(!S.lists)S.lists={weekly:WEEKLY0.map((t,i)=>({id:'w'+i,t})),daily:DAILY0.map((t,i)=>({id:'d'+i,t}))};if(!S.notes.jobEq)S.notes.jobEq=[{id:uid(),name:'Upper sheave',sn:'',exp:''},{id:uid(),name:'Lower sheave',sn:'',exp:''}];
   if(!S.notes.pkgMoved){const add=[];[['Lube package','lube','lubeExp'],['Latch package','latch','latchExp']].forEach(([nm,k,ke])=>{if(!S.notes.jobEq.some(e=>e.name.toLowerCase()===nm.toLowerCase()))add.push({id:uid(),name:nm,sn:S.notes[k]||'',exp:S.notes[ke]||''});delete S.notes[k];delete S.notes[ke]});S.notes.jobEq.unshift(...add);S.notes.pkgMoved=true}S.notes.sh=S.notes.sh||{D:{checks:S.notes.checks||{},ops:S.notes.ops||''},N:{checks:{},ops:''}};if(S.notes.crew&&!S.notes.sh.D.crew){S.notes.sh.D.crew=S.notes.crew}delete S.notes.crew;delete S.notes.checks;delete S.notes.ops;S.history=S.history||[];if(!S.shift)S.shift='D'};
 norm();
+S.wells.forEach(w=>{w.last=Math.floor(+w.last||0)});
 {const OLD={"#e53935": "#ff0000", "#fb8c00": "#ffa500", "#fdd835": "#ffff00", "#43a047": "#009900", "#00897b": "#008080", "#1e88e5": "#0000ff", "#3949ab": "#000080", "#8e24aa": "#800080", "#d81b60": "#ffc0cb", "#6d4c41": "#a52a2a", "#757575": "#595959", "#212121": "#000080"};S.wells.forEach(w=>{if(OLD[w.color])w.color=OLD[w.color]})}
 const shD=k=>S.notes.sh[k];
 const migrateLog=()=>{['D','N'].forEach(k=>{const d=shD(k);if(!d.log){d.log=[];S.wells.forEach(w=>w.stages.filter(x=>x.shift===k).forEach(x=>d.log.push({sid:x.id,w:w.id,num:x.num,note:x.note})))}
@@ -347,8 +348,10 @@ const ask=(title,text,yes='OK')=>new Promise(r=>{const d=$('dlgAsk');$('aTitle')
   const done=v=>{d.close();$('aYes').onclick=$('aNo').onclick=null;r(v)};$('aYes').onclick=()=>done(true);$('aNo').onclick=()=>done(false);d.showModal()});
 
 const SH={D:'Days',N:'Nights'};
-const done=w=>{const n=w.stages.map(s=>parseFloat(s.num)).filter(x=>!isNaN(x));return Math.max(w.last||0,...n,0)};
-const nextNum=w=>{const nums=w.stages.map(s=>parseFloat(s.num)).filter(n=>!isNaN(n));const m=Math.max(w.last||0,...nums,0);return String(Math.floor(m)+1)};
+const base=v=>{const m=String(v??'').trim().match(/^\d+/);return m?+m[0]:NaN};
+const cnt=list=>{const seen=new Set();let n=0;for(const s of list){const b=base(s.num);if(isNaN(b))n++;else if(!seen.has(b)){seen.add(b);n++}}return n};
+const done=w=>{const n=w.stages.map(s=>base(s.num)).filter(x=>!isNaN(x));return Math.max(w.last||0,...n,0)};
+const nextNum=w=>String(done(w)+1);
 
 function render(){
   $('date').textContent=today();
@@ -366,11 +369,11 @@ function render(){
     <label class="lbl">Zero @<input data-a="zero" value="${esc(w.zero)}" inputmode="decimal" aria-label="Zero at, ${esc(w.name)}"></label>
     <div class="stages">${w.stages.map((s,j)=>`<button class="stg" data-s="${j}" ${s.color?`data-c style="background:${s.color};border-color:${s.color};color:#16202a"`:''}><span class="n">${esc(s.num)}</span>${s.note?`<span class="note" ${s.color?'style="color:#333"':''}>${esc(s.note)}</span>`:''}${s.shift?`<span class="sh">${s.shift}</span>`:''}</button>`).join('')}</div>
     <button class="add" data-a="addS">+ Stage ${esc(nextNum(w))}</button>
-    <div class="wfoot"><span>D ${w.stages.filter(s=>s.shift==='D').length} · N ${w.stages.filter(s=>s.shift==='N').length}</span><b>${w.stages.length}${w.total?' · '+done(w)+'/'+esc(w.total):''}</b></div></div>`).join('');
-  const tot=S.wells.reduce((a,w)=>a+w.stages.length,0);
+    <div class="wfoot"><span>D ${cnt(w.stages.filter(s=>s.shift==='D'))} · N ${cnt(w.stages.filter(s=>s.shift==='N'))}</span><b>${cnt(w.stages)}${w.total?' · '+done(w)+'/'+esc(w.total):''}</b></div></div>`).join('');
+  const tot=S.wells.reduce((a,w)=>a+cnt(w.stages),0);
   $('sumTotal').textContent=tot;
-  $('sumBody').innerHTML=S.wells.map(w=>`<tr><td>${wChip(w)}</td><td>${w.stages.map(s=>esc(s.num)+(s.note?` <small>(${esc(s.note)})</small>`:'')).join(', ')||'—'}</td><td class="r">${w.stages.filter(s=>s.shift==='D').length}</td><td class="r">${w.stages.filter(s=>s.shift==='N').length}</td><td class="r">${w.stages.length}</td></tr>`).join('');
-  const all=S.wells.flatMap(w=>w.stages);$('sumD').textContent=all.filter(s=>s.shift==='D').length;$('sumN').textContent=all.filter(s=>s.shift==='N').length;
+  $('sumBody').innerHTML=S.wells.map(w=>`<tr><td>${wChip(w)}</td><td>${w.stages.map(s=>esc(s.num)+(s.note?` <small>(${esc(s.note)})</small>`:'')).join(', ')||'—'}</td><td class="r">${cnt(w.stages.filter(s=>s.shift==='D'))}</td><td class="r">${cnt(w.stages.filter(s=>s.shift==='N'))}</td><td class="r">${cnt(w.stages)}</td></tr>`).join('');
+  $('sumD').textContent=S.wells.reduce((a,w)=>a+cnt(w.stages.filter(s=>s.shift==='D')),0);$('sumN').textContent=S.wells.reduce((a,w)=>a+cnt(w.stages.filter(s=>s.shift==='N')),0);
   document.querySelectorAll('[data-shift]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.shift===S.shift));
   renderNotes();
   $('undo').disabled=!undo.length;
@@ -401,7 +404,7 @@ $('addEq').onclick=()=>{change(()=>S.equipment.push({id:uid(),name:'New item',se
 /* wells */
 $('wUp').onclick=()=>change(()=>S.wells.push({id:uid(),name:'Well '+(S.wells.length+1),zero:'',last:0,stages:[]}));
 $('wDown').onclick=async()=>{const w=S.wells[S.wells.length-1];if(!w)return;
-  if(w.stages.length&&!await ask('Remove '+w.name+'?','It has '+w.stages.length+' stage(s) today.','Remove'))return;change(()=>S.wells.pop())};
+  if(cnt(w.stages)&&!await ask('Remove '+w.name+'?','It has '+cnt(w.stages)+' stage(s) today.','Remove'))return;change(()=>S.wells.pop())};
 $('grid').addEventListener('change',ev=>{const t=ev.target,w=S.wells[t.closest('.well').dataset.w];
   if(t.dataset.a==='wname')change(()=>w.name=t.value.trim()||w.name);
   if(t.dataset.a==='zero')change(()=>w.zero=t.value.trim());});
@@ -427,10 +430,10 @@ $('sCancel').onclick=()=>$('dlgStage').close();
 $('sDel').onclick=()=>{const[wi,si]=cur;change(()=>{const[x]=S.wells[wi].stages.splice(si,1);const[k,e]=logEntry(x.id);if(e)shD(k).log=shD(k).log.filter(y=>y!==e)});$('dlgStage').close();toast('Stage deleted')};
 
 /* day */
-$('newday').onclick=async()=>{const tot=S.wells.reduce((a,w)=>a+w.stages.length,0);
+$('newday').onclick=async()=>{const tot=S.wells.reduce((a,w)=>a+cnt(w.stages),0);
   if(!await ask('Start a new day?','Clears today\'s '+tot+' stage(s) from every well. Wells, zeros and equipment run counts stay, and the Days XO / Nights XO counts stay until you use Clear for next shift. Today is saved under More → Past days.','Clear stages'))return;
   change(()=>{S.history.unshift({date:today(),wells:S.wells.map(w=>({name:w.name,stages:w.stages.map(s=>s.num+(s.note?' ('+s.note+')':''))}))});S.history=S.history.slice(0,60);
-    S.wells.forEach(w=>{const n=w.stages.map(s=>parseFloat(s.num)).filter(x=>!isNaN(x));if(n.length)w.last=Math.max(w.last||0,...n);w.stages=[]})});toast('Stages cleared')};
+    S.wells.forEach(w=>{w.last=done(w);w.stages=[]})});toast('Stages cleared')};
 $('newjob').onclick=()=>{$('dlgMore').close();$('jKeepCounts').checked=false;$('dlgJob').showModal()};
 $('jNo').onclick=()=>$('dlgJob').close();
 $('jYes').onclick=()=>{const keep=$('jKeepCounts').checked;
@@ -440,14 +443,14 @@ $('undo').onclick=()=>{const p=undo.pop();if(!p)return;S=JSON.parse(p);save();re
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('undo').click()}});
 
 /* summary */
-const summary=()=>[today(),...S.wells.map(w=>`${w.name}: ${w.stages.length} stage(s) (D ${w.stages.filter(s=>s.shift==='D').length} / N ${w.stages.filter(s=>s.shift==='N').length})${w.stages.length?' - '+w.stages.map(s=>s.num+(s.note?' ('+s.note+')':'')).join(', '):''}`),'Total stages: '+S.wells.reduce((a,w)=>a+w.stages.length,0)].join('\n');
+const summary=()=>[today(),...S.wells.map(w=>`${w.name}: ${cnt(w.stages)} stage(s) (D ${cnt(w.stages.filter(s=>s.shift==='D'))} / N ${cnt(w.stages.filter(s=>s.shift==='N'))})${cnt(w.stages)?' - '+w.stages.map(s=>s.num+(s.note?' ('+s.note+')':'')).join(', '):''}`),'Total stages: '+S.wells.reduce((a,w)=>a+cnt(w.stages),0)].join('\n');
 const copy=t=>navigator.clipboard?.writeText(t).then(()=>toast('Copied'),()=>toast('Copy blocked: select and copy by hand'));
 $('copy').onclick=()=>copy(summary());
 
 /* more */
 $('more').onclick=()=>{$('moreBody').innerHTML='';$('dlgMore').showModal()};
 $('mClose').onclick=()=>$('dlgMore').close();
-$('showHist').onclick=()=>{$('moreBody').innerHTML=S.history.length?`<div class="hist">${S.history.map(h=>`<div><b>${esc(h.date)}</b> · ${h.wells.reduce((a,w)=>a+w.stages.length,0)} stages<br>${h.wells.map(w=>esc(w.name)+': '+(esc(w.stages.join(', '))||'—')).join('<br>')}</div>`).join('')}</div>`:'<p class="hint">No past days yet. They show up here after New day.</p>'};
+$('showHist').onclick=()=>{$('moreBody').innerHTML=S.history.length?`<div class="hist">${S.history.map(h=>`<div><b>${esc(h.date)}</b> · ${h.wells.reduce((a,w)=>a+cnt(w.stages.map(x=>({num:x}))),0)} stages<br>${h.wells.map(w=>esc(w.name)+': '+(esc(w.stages.join(', '))||'—')).join('<br>')}</div>`).join('')}</div>`:'<p class="hint">No past days yet. They show up here after New day.</p>'};
 $('exp').onclick=()=>{const t=JSON.stringify(S);$('moreBody').innerHTML='<p class="hint">Copied. Paste it somewhere safe (email, notes). Use Restore to load it back.</p><textarea readonly></textarea>';$('moreBody').querySelector('textarea').value=t;copy(t)};
 $('imp').onclick=()=>{$('moreBody').innerHTML='<p class="hint">Paste a backup below, then Load. This replaces everything on the board.</p><textarea id="impT"></textarea><div class="row"><button class="primary" id="impGo">Load</button></div>';
   $('impGo').onclick=()=>{try{const d=JSON.parse($('impT').value);if(!d.wells||!d.equipment)throw 0;change(()=>{S=d;norm();migrateLog()});fillNotes();$('dlgMore').close();toast('Backup loaded')}catch(e){toast('That doesn\'t look like a backup')}}};
@@ -500,7 +503,7 @@ opsEl.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.shiftKey)return;e.pre
   const ins='\n• ';setOps(v.slice(0,a)+ins+v.slice(b),a+ins.length)});
 opsEl.addEventListener('paste',()=>setTimeout(()=>{const v=bullets(opsEl.value).join('\n');setOps(v,v.length)},0));
 const shiftStages=w=>SD().log.filter(e=>e.w===w.id);
-const rem=w=>{const t=parseFloat(w.total);return isNaN(t)?'':Math.max(t-done(w),0)};
+const rem=w=>{const t=parseInt(w.total,10);return isNaN(t)?'':Math.max(t-done(w),0)};
 const fmtD=d=>d?new Date(d+'T12:00').toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'';
 const subject=()=>[N(S).unit,N(S).company,N(S).pad].map(x=>(x||'').trim()).filter(Boolean).concat('XO Notes').join(' ');
 function notesText(){const n=N(S),c=SD().checks,L=[];
@@ -509,18 +512,18 @@ function notesText(){const n=N(S),c=SD().checks,L=[];
   L.push('Unit: '+(n.unit||'')+'    Trailer: '+(n.trailer||''));
   L.push('Injector: '+(n.injector||'')+'    Accumulator: '+(n.accum||''));
   (n.jobEq||[]).forEach(e=>{if(e.sn||e.exp)L.push(e.name+': S/N '+(e.sn||'-')+(e.exp?' (exp '+fmtD(e.exp)+')':''))});L.push('');
-  L.push('STAGES - '+SH[VS]+': '+S.wells.reduce((a,w)=>a+shiftStages(w).length,0)+'    RUNS: '+SD().runs);
-  S.wells.forEach(w=>{const st=shiftStages(w);L.push(w.name+(w.color?' ('+(WCOLORS.find(c=>c[0]===w.color)||['',''])[1]+')':'')+': this shift '+st.length+(st.length?' ('+st.map(s=>s.num+(s.note?' - '+s.note:'')).join(', ')+')':'')+' | completed '+done(w)+(w.total?' of '+w.total+' | remaining '+rem(w):''))});
+  L.push('STAGES - '+SH[VS]+': '+S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)+'    RUNS: '+SD().runs);
+  S.wells.forEach(w=>{const st=shiftStages(w);L.push(w.name+(w.color?' ('+(WCOLORS.find(c=>c[0]===w.color)||['',''])[1]+')':'')+': this shift '+cnt(st)+(st.length?' ('+st.map(s=>s.num+(s.note?' - '+s.note:'')).join(', ')+')':'')+' | completed '+done(w)+(w.total?' of '+w.total+' | remaining '+rem(w):''))});
   L.push('','WEEKLY CHECKS');S.lists.weekly.forEach(x=>L.push((c[x.id]?'[x] ':'[ ] ')+x.t));
   L.push('','DAILY DUTIES');S.lists.daily.forEach(x=>L.push((c[x.id]?'[x] ':'[ ] ')+x.t));
   L.push('','OPERATIONS',...(bullets(SD().ops).length?bullets(SD().ops):['-']));
   return L.join('\n')}
 function renderNotes(){const tb=$('nWells');if(!tb)return;
   $('nTitle').textContent=SH[VS]+' shift';$('opsTitle').textContent=SH[VS]+' operations';$('nShiftLbl').textContent=SH[VS]+' · '+today();
-  $('nStages').textContent=S.wells.reduce((a,w)=>a+shiftStages(w).length,0);
+  $('nStages').textContent=S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0);
   $('nRuns').textContent=SD().runs;
   const f=document.activeElement&&document.activeElement.dataset.wt;
-  if(f==null)tb.innerHTML=S.wells.map((w,i)=>{const st=shiftStages(w);return`<tr><td>${wChip(w)}</td><td>${st.length}${st.length?' <small>('+st.map(s=>esc(s.num)).join(', ')+')</small>':''}</td><td class="r"><input data-wt="${i}" value="${esc(w.total||'')}" inputmode="numeric" aria-label="Total stages ${esc(w.name)}"></td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('');
+  if(f==null)tb.innerHTML=S.wells.map((w,i)=>{const st=shiftStages(w);return`<tr><td>${wChip(w)}</td><td>${cnt(st)}${st.length?' <small>('+st.map(s=>esc(s.num)).join(', ')+')</small>':''}</td><td class="r"><input data-wt="${i}" value="${esc(w.total||'')}" inputmode="numeric" aria-label="Total stages ${esc(w.name)}"></td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('');
   const sub=subject();$('subj').textContent='Subject: '+sub;
   let body=notesText();if(body.length>1800)body=body.slice(0,1800)+'\n...(trimmed - use Copy notes for the full text)';
   $('mail').href='mailto:'+toList(N(S).to)+'?subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(body)}
@@ -537,8 +540,8 @@ function buildPrint(){const n=N(S),c=SD().checks,e=esc,box=v=>v?'☒':'☐';
   <tr><td class="k">Crew</td><td colspan="3">${e(SD().crew)}</td></tr></table>
   ${eq.length?`<h2>Packages, sheaves &amp; certified equipment</h2><table><tr><th>Item</th><th>S/N</th><th>Expiry</th></tr>${eq.map(x=>`<tr><td>${e(x.name)}</td><td>${e(x.sn)}</td><td class="${dueSoon(x.exp)?'ex':''}">${e(fmtD(x.exp))}</td></tr>`).join('')}</table>`:''}
   <h2>Wells</h2><table><tr><th>Well</th><th>This shift</th><th class="r">Total stages</th><th class="r">Completed</th><th class="r">Remaining</th></tr>
-  ${S.wells.map(w=>{const st=shiftStages(w);return`<tr><td>${chip(w)}</td><td>${st.length}${st.length?' &nbsp;('+st.map(x=>e(x.num)+(x.note?' - '+e(x.note):'')).join(', ')+')':''}</td><td class="r">${e(w.total||'')}</td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('')}</table>
-  <div class="tot"><div>Stages this shift<b>${S.wells.reduce((a,w)=>a+shiftStages(w).length,0)}</b></div><div>Runs this shift<b>${SD().runs}</b></div></div>
+  ${S.wells.map(w=>{const st=shiftStages(w);return`<tr><td>${chip(w)}</td><td>${cnt(st)}${st.length?' &nbsp;('+st.map(x=>e(x.num)+(x.note?' - '+e(x.note):'')).join(', ')+')':''}</td><td class="r">${e(w.total||'')}</td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('')}</table>
+  <div class="tot"><div>Stages this shift<b>${S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)}</b></div><div>Runs this shift<b>${SD().runs}</b></div></div>
   <h2>Checks</h2><div class="cols"><div><b>Weekly checks</b>${S.lists.weekly.map(x=>`<div class="ck"><span>${box(c[x.id])}</span><span>${e(x.t)}</span></div>`).join('')}</div>
   <div><b>Daily duties</b>${S.lists.daily.map(x=>`<div class="ck"><span>${box(c[x.id])}</span><span>${e(x.t)}</span></div>`).join('')}</div></div>
   <h2>Operations</h2>${ops.length?`<ul>${ops.map(o=>`<li>${e(o.replace(/^•\s*/,''))}</li>`).join('')}</ul>`:'<p>-</p>'}`}
