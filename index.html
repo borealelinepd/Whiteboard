@@ -528,7 +528,7 @@ function notesText(){const n=N(S),c=SD().checks,L=[];
   L.push('Unit: '+(n.unit||'')+'    Trailer: '+(n.trailer||''));
   (n.jobEq||[]).forEach(e=>{if(e.sn||e.exp)L.push(e.name+': '+(e.sn||'-')+(e.exp?' (exp '+fmtD(e.exp)+')':''))});L.push('');
   L.push('STAGES - '+SH[VS]+': '+S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)+'    RUNS: '+SD().runs);
-  S.wells.forEach(w=>{const st=shiftStages(w);L.push(w.name+(w.color?' ('+(WCOLORS.find(c=>c[0]===w.color)||['',''])[1]+')':'')+': this shift '+cnt(st)+(st.length?' ('+st.map(s=>s.num+(s.note?' - '+s.note:'')).join(', ')+')':'')+' | completed '+done(w)+(w.total?' of '+w.total+' | remaining '+rem(w):''))});
+  S.wells.forEach(w=>{const st=shiftStages(w);L.push(w.name+(w.color?' ('+(WCOLORS.find(c=>c[0]===w.color)||['',''])[1]+')':'')+': this shift '+(st.length?st.map(s=>s.num+(s.note?' ('+s.note+')':'')).join(', '):'none')+' | completed '+done(w)+(w.total?' of '+w.total+' | remaining '+rem(w):''))});
   L.push('','WEEKLY CHECKS');S.lists.weekly.forEach(x=>L.push((c[x.id]?'[x] ':'[ ] ')+x.t));
   L.push('','DAILY DUTIES');S.lists.daily.forEach(x=>L.push((c[x.id]?'[x] ':'[ ] ')+x.t));
   L.push('','OPERATIONS',...(bullets(SD().ops).length?bullets(SD().ops):['-']));
@@ -538,7 +538,7 @@ function renderNotes(){const tb=$('nWells');if(!tb)return;
   $('nStages').textContent=S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0);
   $('nRuns').textContent=SD().runs;
   const f=document.activeElement&&document.activeElement.dataset.wt;
-  if(f==null)tb.innerHTML=S.wells.map((w,i)=>{const st=shiftStages(w);return`<tr><td>${wChip(w)}</td><td>${cnt(st)}${st.length?' <small>('+st.map(s=>esc(s.num)).join(', ')+')</small>':''}</td><td class="r"><input data-wt="${i}" value="${esc(w.total||'')}" inputmode="numeric" aria-label="Total stages ${esc(w.name)}"></td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('');
+  if(f==null)tb.innerHTML=S.wells.map((w,i)=>{const st=shiftStages(w);return`<tr><td>${wChip(w)}</td><td>${st.length?st.map(s=>esc(s.num)).join(', '):'—'}</td><td class="r"><input data-wt="${i}" value="${esc(w.total||'')}" inputmode="numeric" aria-label="Total stages ${esc(w.name)}"></td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('');
   const sub=subject();$('subj').textContent='Subject: '+sub;
   let body=notesText();if(body.length>1800)body=body.slice(0,1800)+'\n...(trimmed - use Copy notes for the full text)';
   $('mail').href='mailto:'+toList(N(S).to)+'?subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(body)}
@@ -554,7 +554,7 @@ function buildDoc(){const n=N(S),c=SD().checks,e=esc,box=v=>v?'☒':'☐';
   <tr><td class="k">Crew</td><td colspan="3">${e(SD().crew)}</td></tr></table>
   ${eq.length?`<h2>Packages &amp; equipment</h2><table><tr><th>Item</th><th>S/N or Color</th><th>Expiry</th></tr>${eq.map(x=>`<tr><td>${e(x.name)}</td><td>${e(x.sn)}</td><td class="${dueSoon(x.exp)?'ex':''}">${e(fmtD(x.exp))}</td></tr>`).join('')}</table>`:''}
   <h2>Wells</h2><table><tr><th>Well</th><th>This shift</th><th class="r">Total stages</th><th class="r">Completed</th><th class="r">Remaining</th></tr>
-  ${S.wells.map(w=>{const st=shiftStages(w);return`<tr><td>${chip(w)}</td><td>${cnt(st)}${st.length?' &nbsp;('+st.map(x=>e(x.num)+(x.note?' - '+e(x.note):'')).join(', ')+')':''}</td><td class="r">${e(w.total||'')}</td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('')}</table>
+  ${S.wells.map(w=>{const st=shiftStages(w);return`<tr><td>${chip(w)}</td><td>${st.length?st.map(x=>e(x.num)+(x.note?' ('+e(x.note)+')':'')).join(', '):'—'}</td><td class="r">${e(w.total||'')}</td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('')}</table>
   <div class="tot"><div>Stages this shift<b>${S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)}</b></div><div>Runs this shift<b>${SD().runs}</b></div></div>
   <h2>Checks</h2><div class="cols"><div><b>Weekly checks</b>${S.lists.weekly.map(x=>`<div class="ck"><span>${box(c[x.id])}</span><span>${e(x.t)}</span></div>`).join('')}</div>
   <div><b>Daily duties</b>${S.lists.daily.map(x=>`<div class="ck"><span>${box(c[x.id])}</span><span>${e(x.t)}</span></div>`).join('')}</div></div>
