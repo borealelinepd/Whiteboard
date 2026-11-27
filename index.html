@@ -349,7 +349,7 @@ const ask=(title,text,yes='OK')=>new Promise(r=>{const d=$('dlgAsk');$('aTitle')
 
 const SH={D:'Days',N:'Nights'};
 const base=v=>{const m=String(v??'').trim().match(/^\d+/);return m?+m[0]:NaN};
-const cnt=list=>{const seen=new Set();let n=0;for(const s of list){const b=base(s.num);if(isNaN(b))n++;else if(!seen.has(b)){seen.add(b);n++}}return n};
+const cnt=list=>list.length; // every entry counts, reruns included (they're billed)
 const done=w=>{const n=w.stages.map(s=>base(s.num)).filter(x=>!isNaN(x));return Math.max(w.last||0,...n,0)};
 const nextNum=w=>String(done(w)+1);
 
