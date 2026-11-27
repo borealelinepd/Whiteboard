@@ -231,15 +231,14 @@ textarea{width:100%;min-height:120px;font:13px/1.3 ui-monospace,monospace;border
     <div class="form">
       <label>Unit<input data-n="unit"></label><label>Company<input data-n="company"></label><label>Pad<input data-n="pad"></label>
       <label>Trailer<input data-n="trailer"></label>
-                  <label>Injector<input data-n="injector"></label><label>Accumulator<input data-n="accum"></label>
     </div>
     <p class="hint">These stay filled in from day to day and go at the top of both XO emails.</p>
   </section>
   <section class="card">
-    <div class="head"><h2>Packages, sheaves &amp; certified equipment</h2></div>
+    <div class="head"><h2>Packages &amp; equipment</h2></div>
     <div id="jeList"></div>
     <div class="row" style="justify-content:flex-start"><button id="addJe">+ Add equipment</button></div>
-    <p class="hint">Expiry dates within 30 days turn red. These go in both XO emails.</p>
+    <p class="hint">Expiry is only needed for items that have one. Dates within 30 days turn red. Items with an S/N or date go on the XO notes.</p>
   </section>
 </main>
 
@@ -335,7 +334,11 @@ if(!S||!S.wells)S=fresh();
 const XO_TO='pdreports@bonnettsenergy.com',TECH_TO='cwingie@bonnettsenergy.com; kagunias@bonnettsenergy.com';
 const toList=t=>(t||'').split(/[;,\s]+/).filter(Boolean).map(encodeURIComponent).join(',').replace(/%40/g,'@');
 const norm=()=>{S.runs=S.runs||[];S.notes=S.notes||{};if(!S.notes.to)S.notes.to=XO_TO;if(!S.techTo)S.techTo=TECH_TO;if(!S.lists)S.lists={weekly:WEEKLY0.map((t,i)=>({id:'w'+i,t})),daily:DAILY0.map((t,i)=>({id:'d'+i,t}))};if(!S.notes.jobEq)S.notes.jobEq=[{id:uid(),name:'Upper sheave',sn:'',exp:''},{id:uid(),name:'Lower sheave',sn:'',exp:''}];
-  if(!S.notes.pkgMoved){const add=[];[['Lube package','lube','lubeExp'],['Latch package','latch','latchExp']].forEach(([nm,k,ke])=>{if(!S.notes.jobEq.some(e=>e.name.toLowerCase()===nm.toLowerCase()))add.push({id:uid(),name:nm,sn:S.notes[k]||'',exp:S.notes[ke]||''});delete S.notes[k];delete S.notes[ke]});S.notes.jobEq.unshift(...add);S.notes.pkgMoved=true}S.notes.sh=S.notes.sh||{D:{checks:S.notes.checks||{},ops:S.notes.ops||''},N:{checks:{},ops:''}};if(S.notes.crew&&!S.notes.sh.D.crew){S.notes.sh.D.crew=S.notes.crew}delete S.notes.crew;delete S.notes.checks;delete S.notes.ops;S.history=S.history||[];if(!S.shift)S.shift='D'};
+  if(!S.notes.pkgMoved){const add=[];[['Lube package','lube','lubeExp'],['Latch package','latch','latchExp']].forEach(([nm,k,ke])=>{if(!S.notes.jobEq.some(e=>e.name.toLowerCase()===nm.toLowerCase()))add.push({id:uid(),name:nm,sn:S.notes[k]||'',exp:S.notes[ke]||''});delete S.notes[k];delete S.notes[ke]});S.notes.jobEq.unshift(...add);S.notes.pkgMoved=true}
+  if(!S.notes.injMoved){const at=Math.max(...S.notes.jobEq.map((e,k)=>/package/i.test(e.name)?k:-1))+1;const add=[];
+    [['Injector','injector'],['Accumulator','accum']].forEach(([nm,k])=>{if(!S.notes.jobEq.some(e=>e.name.toLowerCase()===nm.toLowerCase()))add.push({id:uid(),name:nm,sn:S.notes[k]||'',exp:''});delete S.notes[k]});
+    S.notes.jobEq.splice(at>0?at:S.notes.jobEq.length,0,...add);S.notes.injMoved=true}
+  S.notes.sh=S.notes.sh||{D:{checks:S.notes.checks||{},ops:S.notes.ops||''},N:{checks:{},ops:''}};if(S.notes.crew&&!S.notes.sh.D.crew){S.notes.sh.D.crew=S.notes.crew}delete S.notes.crew;delete S.notes.checks;delete S.notes.ops;S.history=S.history||[];if(!S.shift)S.shift='D'};
 norm();
 S.wells.forEach(w=>{w.last=Math.floor(+w.last||0)});
 {const OLD={"#e53935": "#ff0000", "#fb8c00": "#ffa500", "#fdd835": "#ffff00", "#43a047": "#009900", "#00897b": "#008080", "#1e88e5": "#0000ff", "#3949ab": "#000080", "#8e24aa": "#800080", "#d81b60": "#ffc0cb", "#6d4c41": "#a52a2a", "#757575": "#595959", "#212121": "#000080"};S.wells.forEach(w=>{if(OLD[w.color])w.color=OLD[w.color]})}
@@ -450,7 +453,7 @@ $('newday').onclick=async()=>{const tot=S.wells.reduce((a,w)=>a+cnt(w.stages),0)
 $('newjob').onclick=()=>{$('dlgMore').close();$('jKeepCounts').checked=false;$('dlgJob').showModal()};
 $('jNo').onclick=()=>$('dlgJob').close();
 $('jYes').onclick=()=>{const keep=$('jKeepCounts').checked;
-  change(()=>{const f=fresh();S.wells=f.wells;S.history=[];const names=(S.notes.jobEq||[]).map(e=>({id:uid(),name:e.name,sn:'',exp:''}));S.notes={jobEq:names,pkgMoved:true};norm();migrateLog();S.equipment.forEach(e=>{if(!keep)e.count=0;e.serial='';e.note=''})});
+  change(()=>{const f=fresh();S.wells=f.wells;S.history=[];const names=(S.notes.jobEq||[]).map(e=>({id:uid(),name:e.name,sn:'',exp:''}));S.notes={jobEq:names,pkgMoved:true,injMoved:true};norm();migrateLog();S.equipment.forEach(e=>{if(!keep)e.count=0;e.serial='';e.note=''})});
   fillNotes();$('dlgJob').close();toast('New job started')};
 $('undo').onclick=()=>{const p=undo.pop();if(!p)return;S=JSON.parse(p);save();render();fillNotes();toast('Undone')};
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('undo').click()}});
@@ -492,8 +495,8 @@ const dueSoon=d=>d&&(new Date(d+'T12:00')-new Date())/864e5<30;
 function renderJe(){$('jeList').innerHTML=N(S).jobEq.map((e,i)=>`<div class="je ${dueSoon(e.exp)?'due':''}" data-i="${i}">
   <label class="nm2">Item<input data-je="name" value="${esc(e.name)}"></label>
   <label>S/N<input data-je="sn" value="${esc(e.sn)}"></label>
-  <label>Expiry<input type="date" data-je="exp" value="${esc(e.exp)}"></label>
-  <button class="x" data-je-del title="Remove" aria-label="Remove ${esc(e.name)}">✕</button></div>`).join('')||'<p class="hint">No items. Add packages, sheaves or other certified gear.</p>'}
+  <label>Expiry (if applicable)<input type="date" data-je="exp" value="${esc(e.exp)}"></label>
+  <button class="x" data-je-del title="Remove" aria-label="Remove ${esc(e.name)}">✕</button></div>`).join('')||'<p class="hint">No items. Add packages, sheaves or other equipment.</p>'}
 $('jeList').addEventListener('input',ev=>{const t=ev.target;if(!t.dataset.je)return;const e=N(S).jobEq[t.closest('.je').dataset.i];e[t.dataset.je]=t.value;save();renderNotes();
   if(t.dataset.je==='exp')t.closest('.je').classList.toggle('due',!!dueSoon(t.value))});
 $('jeList').addEventListener('click',async ev=>{const b=ev.target.closest('[data-je-del]');if(!b)return;const i=+b.closest('.je').dataset.i,e=N(S).jobEq[i];
@@ -523,7 +526,6 @@ function notesText(){const n=N(S),c=SD().checks,L=[];
   L.push('XO NOTES - '+today()+' - '+SH[VS]);
   L.push('Company: '+(n.company||''),'Pad: '+(n.pad||''),'Crew: '+(SD().crew||''),'');
   L.push('Unit: '+(n.unit||'')+'    Trailer: '+(n.trailer||''));
-  L.push('Injector: '+(n.injector||'')+'    Accumulator: '+(n.accum||''));
   (n.jobEq||[]).forEach(e=>{if(e.sn||e.exp)L.push(e.name+': S/N '+(e.sn||'-')+(e.exp?' (exp '+fmtD(e.exp)+')':''))});L.push('');
   L.push('STAGES - '+SH[VS]+': '+S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)+'    RUNS: '+SD().runs);
   S.wells.forEach(w=>{const st=shiftStages(w);L.push(w.name+(w.color?' ('+(WCOLORS.find(c=>c[0]===w.color)||['',''])[1]+')':'')+': this shift '+cnt(st)+(st.length?' ('+st.map(s=>s.num+(s.note?' - '+s.note:'')).join(', ')+')':'')+' | completed '+done(w)+(w.total?' of '+w.total+' | remaining '+rem(w):''))});
@@ -549,9 +551,8 @@ function buildDoc(){const n=N(S),c=SD().checks,e=esc,box=v=>v?'☒':'☐';
   <table><tr><td class="k">Date</td><td>${e(today())}</td><td class="k">Shift</td><td>${box(VS==='D')} Days &nbsp; ${box(VS==='N')} Nights</td></tr>
   <tr><td class="k">Company</td><td>${e(n.company)}</td><td class="k">Pad</td><td>${e(n.pad)}</td></tr>
   <tr><td class="k">Unit</td><td>${e(n.unit)}</td><td class="k">Trailer</td><td>${e(n.trailer)}</td></tr>
-  <tr><td class="k">Injector</td><td>${e(n.injector)}</td><td class="k">Accumulator</td><td>${e(n.accum)}</td></tr>
   <tr><td class="k">Crew</td><td colspan="3">${e(SD().crew)}</td></tr></table>
-  ${eq.length?`<h2>Packages, sheaves &amp; certified equipment</h2><table><tr><th>Item</th><th>S/N</th><th>Expiry</th></tr>${eq.map(x=>`<tr><td>${e(x.name)}</td><td>${e(x.sn)}</td><td class="${dueSoon(x.exp)?'ex':''}">${e(fmtD(x.exp))}</td></tr>`).join('')}</table>`:''}
+  ${eq.length?`<h2>Packages &amp; equipment</h2><table><tr><th>Item</th><th>S/N</th><th>Expiry</th></tr>${eq.map(x=>`<tr><td>${e(x.name)}</td><td>${e(x.sn)}</td><td class="${dueSoon(x.exp)?'ex':''}">${e(fmtD(x.exp))}</td></tr>`).join('')}</table>`:''}
   <h2>Wells</h2><table><tr><th>Well</th><th>This shift</th><th class="r">Total stages</th><th class="r">Completed</th><th class="r">Remaining</th></tr>
   ${S.wells.map(w=>{const st=shiftStages(w);return`<tr><td>${chip(w)}</td><td>${cnt(st)}${st.length?' &nbsp;('+st.map(x=>e(x.num)+(x.note?' - '+e(x.note):'')).join(', ')+')':''}</td><td class="r">${e(w.total||'')}</td><td class="r">${done(w)}</td><td class="r"><b>${rem(w)}</b></td></tr>`}).join('')}</table>
   <div class="tot"><div>Stages this shift<b>${S.wells.reduce((a,w)=>a+cnt(shiftStages(w)),0)}</b></div><div>Runs this shift<b>${SD().runs}</b></div></div>
