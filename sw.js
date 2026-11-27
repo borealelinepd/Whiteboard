@@ -1,7 +1,7 @@
 // White Board offline support.
 // Always tries the internet first so updates show up right away,
 // and falls back to the saved copy when there's no signal.
-const CACHE='whiteboard-v3';
+const CACHE='whiteboard-v4';
 const FILES=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','icon-maskable.png','logo.jpg'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
